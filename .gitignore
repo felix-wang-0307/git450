@@ -1,3 +1,11 @@
+# build files
+build/
+.idea/
+
+# OS generated files
+.DS_Store
+ehthumbs.db
+
 # Prerequisites
 *.d
 
@@ -30,3 +38,4 @@
 *.exe
 *.out
 *.app
+
