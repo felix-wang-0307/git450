@@ -17,7 +17,7 @@ run:
 	./serverD
 	./serverM
 	./serverR
-	./client
+	./client guest guest
 
 # Rule to compile each .cpp file into an executable
 %: %.cpp

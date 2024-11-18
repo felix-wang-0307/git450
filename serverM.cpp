@@ -1,4 +1,5 @@
 #include <iostream>
+#include <thread>
 #include "serverM.h"
 #include "lib/tcpSocket.h"
 #include "lib/udpSocket.h"
@@ -39,8 +40,14 @@ public:
 };
 
 
+
 int main() {
     ServerM serverM;
-    serverM.run();
+    std::thread serverThread(&ServerM::run, &serverM);
+    serverThread.detach(); // Detach the thread to run independently
+    // Keep the main thread alive or perform other tasks
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
     return 0;
 }
