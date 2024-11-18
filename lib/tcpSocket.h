@@ -17,7 +17,7 @@ enum class SocketType {
     CLIENT
 };
 
-enum class SocketStatus {
+enum SocketStatus {
     ERROR = -1,
     DISCONNECTED,
     CONNECTED,
@@ -64,6 +64,18 @@ public:
         }
     }
 
+    SocketStatus getStatus() {
+        return status;
+    }
+
+    int getSocketFd() {
+        return socket_fd;
+    }
+
+    void setSocketFd(int fd) {
+        socket_fd = fd;
+    }
+
 protected:
     SocketStatus status;
     int socket_fd;
@@ -107,7 +119,7 @@ public:
         }
 
         TCPSocket* newSocket = new TCPSocket();
-        newSocket->socket_fd = client_sock;
+        newSocket->setSocketFd(client_sock);
         return newSocket;
     }
 };
