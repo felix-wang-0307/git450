@@ -1,36 +1,94 @@
 #include <iostream>
-#include "lib/utils.h"
+#include <unordered_map>
+#include <string>
+#include "lib/config.h"
 #include "lib/udp_socket.h"
+#include "lib/encryptor.h"
+#include "lib/utils.h"
 
-int PORT = std::stoi(config["server_a_port"]);
-std::string SERVER_M_HOST = config["server_ip"];
-int SERVER_M_PORT = std::stoi(config["server_m_port"]);
+using std::string;
+using std::unordered_map;
+
+int PORT = config::SERVER_A_PORT;
+string SERVER_M_HOST = config::SERVER_IP;
+int SERVER_M_PORT = config::SERVER_M_UDP_PORT;
 
 class ServerA {
 public:
-    UDPSocket* server;
+    UDPServerSocket *server;
+    unordered_map<string, string> members;
+
     ServerA() {
-        bootUp();
+        server = new UDPServerSocket(PORT);
+        std::cout << "Server A is up and running using UDP on port " << PORT << std::endl;
+        loadMembers();  // Load the members from the file
     }
+
     ~ServerA() {
+        std::cout << "DEBUG: Server A is shutting down. Port " << PORT << " released." << std::endl;
         delete server;
     }
-    void bootUp() {
-        server = new UDPSocket();
-        std::cout << "Server A is up and running using UDP on port " << PORT << std::endl;
+
+    void loadMembers(const string &filename = "./data/members.txt") {
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Failed to open file: " << filename << std::endl;
+            return;
+        }
+        string line;
+        std::getline(file, line);  // Skip the header
+        while (std::getline(file, line)) {
+            auto data = utils::split(line);
+            members[data[0]] = data[1];
+        }
     }
+
     void run() {
         while (true) {
-            std::string data = server->receive();
-            std::cout << "Server A received: " << data << std::endl;
-            if (data.empty()) {
-                break;
+            string data = server->receive();
+            if (utils::getOperation(data) != "AUTH") {
+                std::cerr << "Invalid operation" << std::endl;
+                continue;
             }
-            server->send(data, SERVER_M_HOST, SERVER_M_PORT);
+            auto authData = utils::split(data);
+            const string& username = authData[1];
+            const string& password = authData[2];
+            std::cout << "Server A received username " << username
+                      << " and password " << utils::toAstrix(password)
+                      << std::endl;
+            ClientType type = authenticate(username, password);
+            debug(ClientTypeToString.at(type));
+            if (static_cast<int>(type) >= 0) {
+                std::cout << "Member " << username
+                          << " has been authorized";
+            } else {
+                std::cout << "The username " << username
+                          << " or password " << utils::toAstrix(password)
+                          << " is incorrect";
+            }
+            string auth_message = "AUTH_RESULT " + ClientTypeToString.at(type);
+            debug(auth_message);
+            server->send(auth_message, SERVER_M_HOST, SERVER_M_PORT);
         }
+    }
+
+    ClientType authenticate(const string &username, const string &password) {
+        if (username == "guest" && password == "guest") {
+            return ClientType::GUEST;
+        }
+        if (members.find(username) == members.end()) {
+            return ClientType::NOT_EXIST;
+        }
+        string true_password = members[username];
+        if (true_password == Encryptor::encrypt(password)) {
+            return ClientType::MEMBER;
+        }
+        return ClientType::INVALID;  // invalid password
     }
 };
 
 int main() {
+    ServerA serverA;
+    serverA.run();
     return 0;
 }
