@@ -1,6 +1,3 @@
-//
-// Created by Waterdog on 2024/11/17.
-//
 
 #ifndef GIT450_UTILS_H
 #define GIT450_UTILS_H
@@ -12,7 +9,7 @@
 #include <map>
 
 namespace utils {
-    std::map<std::string, std::string> loadConfig(const std::string& filename) {
+    std::map<std::string, std::string> loadConfig(const std::string& filename = "config.txt") {
         std::ifstream config_file(filename);
         std::map<std::string, std::string> config;
         if (!config_file.is_open()) {
