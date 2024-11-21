@@ -6,11 +6,9 @@ OBJS := $(SRCS:.cpp=)
 
 # Default target to compile all executables
 all: $(OBJS)
-	$(CPP) $(CPPFLAGS) -o client client.cpp
-	$(CPP) $(CPPFLAGS) -o serverA serverA.cpp
-	$(CPP) $(CPPFLAGS) -o serverD serverD.cpp
-	$(CPP) $(CPPFLAGS) -o serverM serverM.cpp
-	$(CPP) $(CPPFLAGS) -o serverR serverR.cpp
+
+run_client:
+	./client guest guest
 
 run:
 	./serverA
