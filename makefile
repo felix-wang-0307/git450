@@ -1,6 +1,6 @@
 # Variables
 CPP := g++
-CPPFLAGS := -std=c++14
+CPPFLAGS := -std=c++17
 SRCS := $(wildcard *.cpp)
 OBJS := $(SRCS:.cpp=)
 
