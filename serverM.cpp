@@ -1,8 +1,8 @@
 #include <iostream>
 #include <thread>
 #include "serverM.h"
-#include "lib/tcpSocket.h"
-#include "lib/udpSocket.h"
+#include "lib/tcp_socket.h"
+#include "lib/udp_socket.h"
 #include "lib/utils.h"
 
 class ServerM {
@@ -16,17 +16,22 @@ public:
         delete server;
     }
     void bootUp() {
-        server = new TCPServerSocket(TCP_PORT);
+        server = new TCPServerSocket(25012);
+        std::cout << "Server M is up and running using TCP on port " << TCP_PORT << std::endl;
         std::cout << "Server M is up and running using UDP on port " << UDP_PORT << std::endl;
     }
     void handleClientAuth() {
 
     }
     void run() {
-        server->listen();
         while (true) {
             TCPSocket* client = server->accept();
+            if (client == nullptr) {
+                std::cerr << "Failed to accept client" << std::endl;
+                continue;
+            }
             std::string data = client->receive();
+            std::cout << "Server M received: " << data << std::endl;
             if (data.empty()) {
                 break;
             }
@@ -43,11 +48,6 @@ public:
 
 int main() {
     ServerM serverM;
-    std::thread serverThread(&ServerM::run, &serverM);
-    serverThread.detach(); // Detach the thread to run independently
-    // Keep the main thread alive or perform other tasks
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    serverM.run();
     return 0;
 }
