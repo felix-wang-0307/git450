@@ -1,5 +1,5 @@
-#ifndef GIT450_TCPSOCKET_H
-#define GIT450_TCPSOCKET_H
+#ifndef GIT450_TCP_SOCKET_H
+#define GIT450_TCP_SOCKET_H
 
 #include <iostream>
 #include <string>
@@ -41,6 +41,7 @@ public:
 
     bool send(const std::string& data) {
         int size = ::send(socket_fd, data.c_str(), data.size(), 0);
+        std::cout << "Sent: " << data << std::endl;
         return size != -1;
     }
 
@@ -53,6 +54,7 @@ public:
             return "";
         }
         std::string data(buf, bytes_received);
+        std::cout << "Received: " << data << std::endl;
         delete[] buf;
         return data;
     }
@@ -83,41 +85,65 @@ protected:
 
 class TCPServerSocket : public TCPSocket {
 public:
+    int socket_name;
+
     explicit TCPServerSocket(int port = DEFAULT_PORT) {
         if (!create()) {
             std::cerr << "Failed to create socket" << std::endl;
             status = SocketStatus::ERROR;
+            return;
         }
         if (!bind(port)) {
             std::cerr << "Failed to bind socket to port " << port << std::endl;
             status = SocketStatus::ERROR;
+            return;
         }
         if (!listen()) {
             std::cerr << "Failed to listen on socket" << std::endl;
             status = SocketStatus::ERROR;
+            return;
         }
+        status = SocketStatus::LISTENING;
+        std::cout << "Server is listening on port " << port << std::endl;
     }
 
     bool bind(int port) {
         sockaddr_in addr;
         std::memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
-        addr.sin_addr.s_addr = INADDR_ANY;
+        addr.sin_addr.s_addr = INADDR_ANY;  // Bind to all interfaces
         addr.sin_port = htons(port);
 
-        return ::bind(socket_fd, (sockaddr*)&addr, sizeof(addr)) != -1;
+        int opt = 1;
+        // Allow the socket to reuse the address
+        if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+            std::cerr << "setsockopt failed: " << strerror(errno) << std::endl;
+            return false;
+        }
+
+        // Attempt to bind
+        if (::bind(socket_fd, (sockaddr*)&addr, sizeof(addr)) == -1) {
+            std::cerr << "Bind failed: " << strerror(errno) << std::endl;
+            return false;
+        }
+        return true;
     }
 
+
     bool listen(int backlog = 5) {
-        return ::listen(socket_fd, backlog) != -1;
+        if (::listen(socket_fd, backlog) == -1) {
+            std::cerr << "Listen failed: " << strerror(errno) << std::endl;
+            return false;
+        }
+        return true;
     }
 
     TCPSocket* accept() {
         int client_sock = ::accept(socket_fd, nullptr, nullptr);
         if (client_sock == -1) {
+            std::cerr << "Accept failed: " << strerror(errno) << std::endl;
             return nullptr;
         }
-
         TCPSocket* newSocket = new TCPSocket();
         newSocket->setSocketFd(client_sock);
         return newSocket;
@@ -144,4 +170,4 @@ public:
     }
 };
 
-#endif //GIT450_TCPSOCKET_H
+#endif //GIT450_TCP_SOCKET_H

@@ -2,8 +2,8 @@
 // Created by Waterdog on 2024/11/17.
 //
 
-#ifndef GIT450_UDPSOCKET_H
-#define GIT450_UDPSOCKET_H
+#ifndef GIT450_UDP_SOCKET_H
+#define GIT450_UDP_SOCKET_H
 
 #include <iostream>
 #include <string>
@@ -97,4 +97,4 @@ public:
     }
 };
 
-#endif //GIT450_UDPSOCKET_H
+#endif //GIT450_UDP_SOCKET_H
