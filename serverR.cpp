@@ -1,7 +1,8 @@
 #include <iostream>
 #include "lib/utils.h"
+#include "lib/config.h"
 
-int PORT = std::stoi(config["server_r_port"]);
+int PORT = config::SERVER_R_PORT;
 
 void bootUp() {
     std::cout << "Server R is up and running using UDP on port " << PORT << std::endl;
