@@ -1,11 +1,8 @@
 #include <iostream>
 #include <map>
 #include <thread>
-#include "client.h"
 #include "lib/tcp_socket.h"
 #include "lib/utils.h"
-
-std::map<std::string, std::string> config;
 
 enum ClientType {
     INVALID = -1,
@@ -17,7 +14,7 @@ class Client {
 public:
     TCPClientSocket* client;
     int type;
-    Client(std::string username, std::string password) {
+    Client(string username, string password) {
         bootUp();
         type = authenticate(username, password);
         if (type == -1) {

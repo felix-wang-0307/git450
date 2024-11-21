@@ -6,6 +6,9 @@ build/
 .DS_Store
 ehthumbs.db
 
+# Visual Studio Code files
+.vscode/
+
 # Prerequisites
 *.d
 

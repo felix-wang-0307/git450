@@ -1,9 +1,11 @@
 #include <iostream>
 #include <thread>
-#include "serverM.h"
 #include "lib/tcp_socket.h"
 #include "lib/udp_socket.h"
 #include "lib/utils.h"
+
+int TCP_PORT = std::stoi(config["server_m_tcp_port"]);
+int UDP_PORT = std::stoi(config["server_m_udp_port"]);
 
 class ServerM {
 public:
@@ -16,7 +18,7 @@ public:
         delete server;
     }
     void bootUp() {
-        server = new TCPServerSocket(25012);
+        server = new TCPServerSocket(TCP_PORT);
         std::cout << "Server M is up and running using TCP on port " << TCP_PORT << std::endl;
         std::cout << "Server M is up and running using UDP on port " << UDP_PORT << std::endl;
     }

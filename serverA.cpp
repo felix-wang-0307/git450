@@ -1,16 +1,36 @@
 #include <iostream>
-#include "serverA.h"
+#include "lib/utils.h"
+#include "lib/udp_socket.h"
 
-void bootUp() {
-    std::cout << "Server A is up and running using UDP on port " << PORT << std::endl;
-};
+int PORT = std::stoi(config["server_a_port"]);
+std::string SERVER_M_HOST = config["server_ip"];
+int SERVER_M_PORT = std::stoi(config["server_m_port"]);
 
-bool authenticate() {
-    std::cout << "Server A is authenticating the client" << std::endl;
-    return true;
+class ServerA {
+public:
+    UDPSocket* server;
+    ServerA() {
+        bootUp();
+    }
+    ~ServerA() {
+        delete server;
+    }
+    void bootUp() {
+        server = new UDPSocket();
+        std::cout << "Server A is up and running using UDP on port " << PORT << std::endl;
+    }
+    void run() {
+        while (true) {
+            std::string data = server->receive();
+            std::cout << "Server A received: " << data << std::endl;
+            if (data.empty()) {
+                break;
+            }
+            server->send(data, SERVER_M_HOST, SERVER_M_PORT);
+        }
+    }
 };
 
 int main() {
-    bootUp();
     return 0;
 }

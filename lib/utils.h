@@ -47,6 +47,6 @@ namespace utils {
     }
 }
 
-
+std::map<std::string, std::string> config = utils::loadConfig();
 
 #endif //GIT450_UTILS_H
