@@ -1,54 +1,62 @@
 #include <iostream>
 #include <map>
-#include <thread>
+#include <string>
+#include <csignal>
 #include "lib/tcp_socket.h"
 #include "lib/utils.h"
+#include "lib/config.h"
 
-enum ClientType {
-    INVALID = -1,
-    GUEST,
-    USER
-};
+using std::string;
+
+string SERVER_HOST = config::SERVER_IP;  // All servers are running on the same host 127.0.0.1
+int SERVER_PORT = config::SERVER_M_TCP_PORT;  // Client will connect to Server M using TCP
 
 class Client {
 public:
-    TCPClientSocket* client;
-    int type;
+    TCPClientSocket *client;
+    ClientType type;
+
     Client(string username, string password) {
         bootUp();
         type = authenticate(username, password);
-        if (type == -1) {
-            std::cerr << "Failed to authenticate" << std::endl;
+        if (type == ClientType::GUEST) {
+            std::cout << "You have been granted guest access." << std::endl;
+        } else if (type == ClientType::MEMBER) {
+            std::cout << "You have been granted member access." << std::endl;
+        } else {
+            // Wrong password or username not found
+            std::cerr << "The credentials are incorrect. Please try again." << std::endl;
             exit(1);
         }
     }
+
     ~Client() {
         delete client;
     }
+
     void bootUp() {
         client = new TCPClientSocket();
-        std::string server_ip = config["server_ip"];
-        int server_port = std::stoi(config["server_port"]);
         std::cout << "Client is up and running" << std::endl;
-        if (!client->connect(server_ip, server_port)) {
+        if (!client->connect(SERVER_HOST, SERVER_PORT)) {
             std::cerr << "Failed to connect to the server" << std::endl;
             exit(1);
         }
     }
-    int authenticate(const std::string& username, const std::string& password) {
+
+    ClientType authenticate(const string &username, const string &password) {
         // Send the username and password to the server
-        std::string data = "AUTH " + username + " " + password;
+        string data = "AUTH " + username + " " + password;
         client->send(data);
-        std::string response = client->receive();
-        // Check the response: USER or GUEST
-        if (response == "USER") {
-            return USER;
-        } else if (response == "GUEST") {
-            return GUEST;
-        } else {
-            return INVALID;
+        string response = client->receive();
+        // Check the response
+        if (utils::getOperation(response) != "AUTH_RESULT") {
+            std::cerr << "Invalid operation" << std::endl;
+            return ClientType::INVALID;
         }
+        string result = utils::getPayload(response);
+        return StringToClientType.at(result);
     }
+
     void run() {
         while (true) {
 
@@ -56,16 +64,33 @@ public:
     }
 };
 
-int main(int argc, char* argv[]) {
+Client* global_client = nullptr;
+
+void handleSigint(int signal) {
+    std::cout << "\nCaught signal " << signal << ". Shutting down client..." << std::endl;
+    delete global_client; // Ensures the destructor is called
+    std::exit(0);
+}
+
+
+int main(int argc, char *argv[]) {
+    signal(SIGINT, handleSigint);
+    signal(SIGTERM, handleSigint);
     // Run the client: ./client <username> <password>
-    config = utils::loadConfig();
     if (argc < 3) {
-        std::cerr << "Wrong number of arguments: expect 2, get " << argc << std::endl;
+        std::cerr << "Wrong number of arguments: expect 2, get " << argc - 1 << std::endl;
         std::cerr << "Usage: ./client <username> <password>" << std::endl;
         exit(1);
     }
-    Client client(argv[1], argv[2]);
-    client.run();
+    try {
+        global_client = new Client(argv[1], argv[2]);
+        global_client->run();
+    } catch (const std::exception &e) {
+        std::cerr << "An error occurred: " << e.what() << std::endl;
+        delete global_client; // Ensure cleanup on exception
+        return 1;
+    }
+
     return 0;
 }
 
