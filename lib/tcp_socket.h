@@ -9,13 +9,7 @@
 #include <cstring>
 #include <arpa/inet.h>
 
-#define DEFAULT_PORT 8080
 #define BUFFER_SIZE 1024
-
-enum class SocketType {
-    SERVER,
-    CLIENT
-};
 
 enum SocketStatus {
     ERROR = -1,
@@ -54,7 +48,6 @@ public:
             return "";
         }
         std::string data(buf, bytes_received);
-        std::cout << "Received: " << data << std::endl;
         delete[] buf;
         return data;
     }
@@ -87,7 +80,7 @@ class TCPServerSocket : public TCPSocket {
 public:
     int socket_name;
 
-    explicit TCPServerSocket(int port = DEFAULT_PORT) {
+    explicit TCPServerSocket(int port = 8080) {
         if (!create()) {
             std::cerr << "Failed to create socket" << std::endl;
             status = SocketStatus::ERROR;
@@ -104,7 +97,6 @@ public:
             return;
         }
         status = SocketStatus::LISTENING;
-        std::cout << "Server is listening on port " << port << std::endl;
     }
 
     bool bind(int port) {

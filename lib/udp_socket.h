@@ -13,7 +13,6 @@
 #include <cstring>
 #include <arpa/inet.h>
 
-#define DEFAULT_PORT 8080
 #define BUFFER_SIZE 1024
 
 class UDPSocket {
@@ -38,17 +37,17 @@ public:
         addr.sin_addr.s_addr = INADDR_ANY;
         addr.sin_port = htons(port);
 
-        return ::bind(socket_fd, (sockaddr*)&addr, sizeof(addr)) != -1;
+        return ::bind(socket_fd, (sockaddr *) &addr, sizeof(addr)) != -1;
     }
 
-    bool send(const std::string& data, const std::string& host, int port) {
+    bool send(const std::string &data, const std::string &host, int port) {
         sockaddr_in addr;
         std::memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port);
         inet_pton(AF_INET, host.c_str(), &addr.sin_addr);
 
-        int size = ::sendto(socket_fd, data.c_str(), data.size(), 0, (sockaddr*)&addr, sizeof(addr));
+        int size = ::sendto(socket_fd, data.c_str(), data.size(), 0, (sockaddr *) &addr, sizeof(addr));
         return size != -1;
     }
 
@@ -56,7 +55,7 @@ public:
         char *buf = new char[max_size];
         sockaddr_in addr;
         socklen_t addr_len = sizeof(addr);
-        ssize_t bytes_received = ::recvfrom(socket_fd, buf, max_size, 0, (sockaddr*)&addr, &addr_len);
+        ssize_t bytes_received = ::recvfrom(socket_fd, buf, max_size, 0, (sockaddr *) &addr, &addr_len);
         if (bytes_received == -1) {
             delete[] buf;
             return "";
@@ -72,13 +71,14 @@ public:
             socket_fd = -1;
         }
     }
+
 protected:
     int socket_fd;
 };
 
 class UDPServerSocket : public UDPSocket {
 public:
-    explicit UDPServerSocket(int port = DEFAULT_PORT) {
+    explicit UDPServerSocket(int port = 8082) {
         if (!create()) {
             std::cerr << "Failed to create socket" << std::endl;
         }
@@ -90,9 +90,15 @@ public:
 
 class UDPClientSocket : public UDPSocket {
 public:
-    UDPClientSocket() {
+    UDPClientSocket(int port = 0) {
         if (!create()) {
             std::cerr << "Failed to create socket" << std::endl;
+        }
+        // Bind to the port if provided
+        if (port != 0) {
+            if (!bind(port)) {
+                std::cerr << "Failed to bind socket to port " << port << std::endl;
+            }
         }
     }
 };
