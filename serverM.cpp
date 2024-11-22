@@ -49,7 +49,6 @@ public:
         }
         std::cout << "The main server has received the response from server A using UDP over port "
                   << SERVER_M_UDP_PORT << std::endl;
-
         return auth_result;
     }
 
@@ -64,12 +63,30 @@ public:
             if (data.empty()) {
                 break;
             }
-            string operation = utils::getOperation(data);
+            string operation = utils::toUpper(utils::getOperation(data));
             if (operation == "AUTH") {
                 string auth_result = handleClientAuth(data);
                 client->send(auth_result);
                 std::cout << "The main server has sent the response from server A to client using TCP over port "
                           << SERVER_M_TCP_PORT << std::endl;
+            } else if (operation == "LOOKUP" || operation == "PUSH" || operation == "REMOVE") {
+                // Forward the request to Server R
+                if (!udp_client->send(data, SERVER_IP, SERVER_R_PORT)) {
+                    std::cerr << "Failed to send data to Server R" << std::endl;
+                    continue;
+                }
+                std::cout << "The main server has sent the lookup request to server R using UDP over port "
+                          << SERVER_M_UDP_PORT << std::endl;
+            } else if (operation == "DEPLOY") {
+                // Forward the request to Server D
+                if (!udp_client->send(data, SERVER_IP, SERVER_D_PORT)) {
+                    std::cerr << "Failed to send data to Server D" << std::endl;
+                    continue;
+                }
+                std::cout << "The main server has sent the deploy request to server D using UDP over port "
+                          << SERVER_M_UDP_PORT << std::endl;
+            } else if (operation == "LOG") {
+
             }
 
             delete client;

@@ -1,6 +1,6 @@
 #include <iostream>
-#include <map>
 #include <string>
+#include <vector>
 #include <csignal>
 #include "lib/tcp_socket.h"
 #include "lib/utils.h"
@@ -11,17 +11,23 @@ using std::string;
 string SERVER_HOST = config::SERVER_IP;  // All servers are running on the same host 127.0.0.1
 int SERVER_PORT = config::SERVER_M_TCP_PORT;  // Client will connect to Server M using TCP
 
+const std::vector<string> GUEST_COMMANDS = {"lookup"};
+const std::vector<string> MEMBER_COMMANDS = {"lookup", "push", "remove", "deploy", "log"};
+
 class Client {
 public:
     TCPClientSocket *client;
     ClientType type;
+    string username;
 
     Client(string username, string password) {
         bootUp();
         type = authenticate(username, password);
         if (type == ClientType::GUEST) {
+            this->username = "guest";
             std::cout << "You have been granted guest access." << std::endl;
         } else if (type == ClientType::MEMBER) {
+            this->username = username;
             std::cout << "You have been granted member access." << std::endl;
         } else {
             // Wrong password or username not found
@@ -59,7 +65,36 @@ public:
 
     void run() {
         while (true) {
-
+            if (type == ClientType::MEMBER) {
+                std::cout << "Please enter the command: " << std::endl
+                << "<lookup <username>>" << std::endl
+                << "<push <filename>>" << std::endl
+                << "<remove <filename>>" << std::endl
+                << "<deploy>" << std::endl
+                << "<log>" << std::endl;
+            } else { // GUEST
+                std::cout << "Please enter the command: " << std::endl
+                << "<lookup <username>>" << std::endl;
+            }
+            string command;
+            std::getline(std::cin, command);
+            command = utils::trim(command);  // Remove leading and trailing spaces
+            if (command == "exit") {
+                break;
+            }
+            string operation = utils::getOperation(command);
+            if (type == ClientType::GUEST) {
+                if (std::find(GUEST_COMMANDS.begin(), GUEST_COMMANDS.end(), operation) == GUEST_COMMANDS.end()) {
+                    std::cerr << "Invalid command for guest" << std::endl;
+                    continue;
+                }
+            } else if (type == ClientType::MEMBER) {
+                if (std::find(MEMBER_COMMANDS.begin(), MEMBER_COMMANDS.end(), operation) == MEMBER_COMMANDS.end()) {
+                    std::cerr << "Invalid command for member" << std::endl;
+                    continue;
+                }
+            }
+            client->send(command);
         }
     }
 };
@@ -90,7 +125,7 @@ int main(int argc, char *argv[]) {
         delete global_client; // Ensure cleanup on exception
         return 1;
     }
-
+    delete global_client;  // Ensure cleanup after "exit" command
     return 0;
 }
 
