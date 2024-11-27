@@ -63,6 +63,15 @@ public:
         return StringToClientType.at(result);
     }
 
+    bool isOperationValid(const string& operation) {
+        if (type == ClientType::GUEST) {
+            return std::find(GUEST_COMMANDS.begin(), GUEST_COMMANDS.end(), operation) != GUEST_COMMANDS.end();
+        } else if (type == ClientType::MEMBER) {
+            return std::find(MEMBER_COMMANDS.begin(), MEMBER_COMMANDS.end(), operation) != MEMBER_COMMANDS.end();
+        }
+        return false;
+    }
+
     void run() {
         while (true) {
             if (type == ClientType::MEMBER) {
@@ -79,21 +88,19 @@ public:
             string command;
             std::getline(std::cin, command);
             command = utils::trim(command);  // Remove leading and trailing spaces
+            // 1. Check if the command is "exit"
             if (command == "exit") {
                 break;
             }
+            // 2. Check if the command is valid for the client type
             string operation = utils::getOperation(command);
-            if (type == ClientType::GUEST) {
-                if (std::find(GUEST_COMMANDS.begin(), GUEST_COMMANDS.end(), operation) == GUEST_COMMANDS.end()) {
-                    std::cerr << "Invalid command for guest" << std::endl;
-                    continue;
-                }
-            } else if (type == ClientType::MEMBER) {
-                if (std::find(MEMBER_COMMANDS.begin(), MEMBER_COMMANDS.end(), operation) == MEMBER_COMMANDS.end()) {
-                    std::cerr << "Invalid command for member" << std::endl;
-                    continue;
-                }
+            if (!isOperationValid(operation)) {
+                std::cerr << "Invalid operation: " << operation << std::endl;
+                continue;
             }
+            // 3. If the command is valid, add the username and send it to the server
+            string payload = utils::getPayload(command);
+            string data = utils::join({operation, this->username, payload});
             client->send(command);
         }
     }
