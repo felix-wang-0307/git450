@@ -19,6 +19,15 @@ namespace utils {
         return tokens;
     }
 
+    std::string join(const std::vector<std::string>& tokens, char delimiter = ' ') {
+        std::string result;
+        for (const std::string& token : tokens) {
+            result.append(token);
+            result.push_back(delimiter);
+        }
+        return result.substr(0, result.size() - 1);
+    }
+
     std::string getOperation(const std::string& data) {
         return split(data)[0];
     }
