@@ -4,11 +4,13 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <map>
 
 namespace utils {
+    // -------- BASIC STRING OPERATIONS --------
     std::vector<std::string> split(const std::string &str, char delimiter = ' ') {
         std::vector<std::string> tokens;
         std::string token;
@@ -28,21 +30,22 @@ namespace utils {
         return result.substr(0, result.size() - 1);
     }
 
-    std::string getOperation(const std::string &data) {
-        return split(data)[0];
+    std::string toUpper(const std::string &str) {
+        std::string result;
+        for (char c: str) {
+            result.push_back(std::toupper(c));
+        }
+        return result;
     }
 
-    std::string getUsername(const std::string &data) {
-        return split(data)[1];
+    std::string toLower(const std::string &str) {
+        std::string result;
+        for (char c: str) {
+            result.push_back(std::tolower(c));
+        }
+        return result;
     }
 
-    std::string getPayload(const std::string &data) {
-        return data.substr(data.find(' ') + 1);
-    }
-
-    std::string toAstrix(const std::string &input) {
-        return std::string(input.size(), '*');
-    }
 
     std::string trim(const std::string &str) {
         size_t first = str.find_first_not_of(' ');
@@ -53,20 +56,8 @@ namespace utils {
         return str.substr(first, (last - first + 1));
     }
 
-    std::string toUpper(const std::string &str) {
-        std::string result;
-        for (char c: str) {
-            result.push_back(c);
-        }
-        return result;
-    }
-
-    std::string toLower(const std::string &str) {
-        std::string result;
-        for (char c: str) {
-            result.push_back(c);
-        }
-        return result;
+    std::string toAstrix(const std::string &input) {
+        return std::string(input.size(), '*');
     }
 }
 
