@@ -3,6 +3,7 @@
 #include "lib/udp_socket.h"
 #include "lib/utils.h"
 #include "lib/config.h"
+#include "lib/logger.h"
 
 using namespace config;
 using std::string;
@@ -63,33 +64,39 @@ public:
             if (data.empty()) {
                 break;
             }
-            string operation = utils::toUpper(utils::getOperation(data));
-            if (operation == "AUTH") {
+            string operation = utils::toLower(utils::getOperation(data));
+            string username = utils::getUsername(data);
+            Logger *logger = new Logger();
+            if (operation == "auth") {
                 string auth_result = handleClientAuth(data);
                 client->send(auth_result);
                 std::cout << "The main server has sent the response from server A to client using TCP over port "
                           << SERVER_M_TCP_PORT << std::endl;
-            } else if (operation == "LOOKUP" || operation == "PUSH" || operation == "REMOVE") {
+            } else if (operation == "lookup" || operation == "push" || operation == "remove") {
                 // Forward the request to Server R
+                logger->appendLog(username, data);
                 if (!udp_client->send(data, SERVER_IP, SERVER_R_PORT)) {
                     std::cerr << "Failed to send data to Server R" << std::endl;
                     continue;
                 }
                 std::cout << "The main server has sent the lookup request to server R using UDP over port "
                           << SERVER_M_UDP_PORT << std::endl;
-            } else if (operation == "DEPLOY") {
+            } else if (operation == "deploy") {
                 // Forward the request to Server D
+                logger->appendLog(username, data);
                 if (!udp_client->send(data, SERVER_IP, SERVER_D_PORT)) {
                     std::cerr << "Failed to send data to Server D" << std::endl;
                     continue;
                 }
                 std::cout << "The main server has sent the deploy request to server D using UDP over port "
                           << SERVER_M_UDP_PORT << std::endl;
-            } else if (operation == "LOG") {
-
+            } else if (operation == "log") {
+                logger->printLog(username);
+                logger->appendLog(username, data);
             }
-
+            logger->writeFile();
             delete client;
+            delete logger;
         }
     }
 };
