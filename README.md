@@ -1,8 +1,8 @@
-# git450
+# Git450
 ## Introduction
-The socket programming project of EE450, 2024 Fall, University of Southern California. 
+The Socket Programming Project of EE450, 2024 Fall, University of Southern California. 
 
-This project implements a Git-like project version control system using C/C++ and socket libraries.
+This project implements a Git-like project version control system using **C++11** and UNIX socket libraries.
 
 ## Files
 - `README.md`: This file.
@@ -19,9 +19,9 @@ This project implements a Git-like project version control system using C/C++ an
 ## Runtime Environment
 - OS: Ubuntu 20.04
     - You can install docker according to [USC CSCI-104 Docker Tutorial](https://github.com/csci104/docker) to run the project.
-    - *Might* work on macOS or other Linux distributions, but not guaranteed.
+    - *Might also* work on macOS or other Linux distributions, but not guaranteed.
 - Compiler: g++ 9.3.0
-- C++ Standard: C++11
+- C++ Standard: C++11 or higher
 - Make: GNU Make 4.2.1
 
 ## Implementation
@@ -31,6 +31,10 @@ This project implements a Git-like project version control system using C/C++ an
 **TCP** is used for client-server communication.
 
 **UDP** is used for server-server communication.
+
+Both TCP and UDP are used in **non-persistent** mode, meaning that the server and client/server will close the connection after each request/response. 
+
+Especially for TCP, the client and server handshake each time before a request.
 
 ### Git450 Application-Layer Protocol
 A Git450 protocol is designed to facilitate the communication between the client and the server. 
@@ -47,6 +51,7 @@ The protocol is designed as follows:
   - `lookup <username>`: Lookup the files of a user.
 - operation (server): same as above with each operation suffixed with `_result`.
 - payload: the payload (or the data) of the operation.
+
 
 Example:
 1. Client sends an authentication request to ServerM over TCP
@@ -66,10 +71,11 @@ Example:
     user1 auth_result MEMBER
     ```
 
-
-
 ### TCP/UDP Socket Classes
 To simplify the socket programming, I implemented two classes, `TCPSocket` and `UDPSocket`, which encapsulate the socket programming details. The prototypes of the classes are as follows:
+
+## Future Work
+1. Apply multi-threading to the server to handle multiple clients simultaneously (current version is single-threaded, and a second client must wait for the first client to finish).
 
 ## Acknowledgement
 Thanks to Professor [Ali Zahid](https://viterbi.usc.edu/directory/faculty/Zahid/Ali) and TAs for the guidance and support in EE450.
