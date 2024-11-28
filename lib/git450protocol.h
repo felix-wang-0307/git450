@@ -9,22 +9,22 @@
 #include "utils.h"
 
 struct Git450Message {
-    // Git450 Message Protocol: <OPERATION> <USERNAME> <PAYLOAD>
-    std::string operation;
+    // Git450 Message Protocol: <USERNAME> <OPERATION> <PAYLOAD (optional)>
     std::string username;
+    std::string operation;
     std::string payload;
 
     std::string toString() const {
-        return utils::join({operation, username, payload});
+        return utils::join({username, operation, payload});
     }
 
     void fromString(const std::string &data) {
         auto tokens = utils::split(data);
         if (tokens.size() >= 1) {
-            operation = tokens[0];
+            username = tokens[0];
         }
         if (tokens.size() >= 2) {
-            username = tokens[1];
+            operation = tokens[1];
         }
         if (tokens.size() >= 3) {
             payload = utils::join(std::vector<std::string>(tokens.begin() + 2, tokens.end()));
@@ -40,25 +40,25 @@ struct Git450Message {
 namespace protocol {
     // -------- PROTOCOL OPERATIONS --------
     // Git450 Message Protocol: <OPERATION> <USERNAME> <PAYLOAD>
-    std::string getOperation(const std::string &data) {
-        // Example: "push user1 file1.txt file2.txt file3.txt" -> "push"
+    std::string getUsername(const std::string &data) {
+        // Example: "user1 push file1.txt file2.txt file3.txt" -> "user1"
         if (data.empty()) {
             return "";
         }
-        return utils::toLower(utils::split(data)[0]);  // The operation is always lowercase
+        return utils::split(data)[0];
     }
 
-    std::string getUsername(const std::string &data) {
-        // Example: "push user1 file1.txt file2.txt file3.txt" -> "user1"
+    std::string getOperation(const std::string &data) {
+        // Example: "user1 push file1.txt file2.txt file3.txt" -> "push"
         auto tokens = utils::split(data);
         if (tokens.size() <= 1) {
             return "";  // No username
         }
-        return tokens[1];
+        return utils::toLower(tokens[1]);
     }
 
     std::string getPayload(const std::string &data) {
-        // Example: "push user1 file1.txt file2.txt file3.txt" -> "file1.txt file2.txt file3.txt"
+        // Example: "user1 push file1.txt file2.txt file3.txt" -> "file1.txt file2.txt file3.txt"
         auto tokens = utils::split(data);
         if (tokens.size() <= 2) {
             return "";
@@ -76,11 +76,9 @@ namespace protocol {
     }
 
     std::string stringifyMessage(const Git450Message &message) {
-        return utils::join({message.operation, message.username, message.payload});
+        return utils::join({message.username, message.operation, message.payload});
     }
 }
-
-
 
 
 #endif //GIT450_GIT450PROTOCOL_H
