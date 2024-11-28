@@ -21,7 +21,7 @@ public:
     mutable std::mutex log_mutex;  // Mutex for thread safety
 
     // Constructor that initializes the log file
-    Logger(const string &log_file_path = "../data/logs.txt") : log_file_path(log_file_path) {
+    Logger(const string &log_file_path = "./data/logs.txt") : log_file_path(log_file_path) {
         std::ifstream log_file(log_file_path);
 
         if (log_file) {
