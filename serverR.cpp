@@ -1,9 +1,11 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 #include "lib/utils.h"
 #include "lib/config.h"
 #include "lib/udp_socket.h"
+#include "lib/git450protocol.h"
 
 using std::string;
 using std::unordered_map;
@@ -52,25 +54,31 @@ public:
     void run() {
         while (true) {
             string data = server->receive();
-            if (utils::getOperation(data) != "push" && utils::getOperation(data) != "remove" && utils::getOperation(data) != "lookup") {
-                std::cerr << "Invalid operation" << std::endl;
-                continue;
-            }
-            string operation = utils::getOperation(data);
-            string username = utils::getUsername(data);
-            string payload = utils::getPayload(data);
-            if (operation == "push") {
-                addFile(username, payload);
-                std::cout << "Server R has received a push request for " << payload << " from " << username << std::endl;
-            } else if (operation == "remove") {
-                removeFile(username, payload);
-                std::cout << "Server R has received a remove request for " << payload << " from " << username << std::endl;
-            } else if (operation == "lookup") {
+            Git450Message request = protocol::parseMessage(data);
+            if (request.operation == "push") {
+                std::cout << "Server R has received a push request for " << request.payload
+                          << " from " << request.username << std::endl;
+                addFile(request.username, request.payload);
+                writeRepo();
+                Git450Message response = {request.username, "push_result", "ok"};
+                server->send(response.toString(), SERVER_M_HOST, SERVER_M_PORT);
+
+            } else if (request.operation == "remove") {
+                std::cout << "Server R has received a remove request for " << request.payload
+                          << " from " << request.username << std::endl;
+                removeFile(request.username, request.payload);
+                writeRepo();
+                Git450Message response = {request.username, "remove_result", "ok"};
+                server->send(response.toString(), SERVER_M_HOST, SERVER_M_PORT);
+            } else if (request.operation == "lookup") {
                 std::cout << "Server R has received a lookup request from the main server." << std::endl;
-                vector<string> files = getFiles(username);
-                string response = "lookup_result " + utils::join(files);
-                server->send(response, SERVER_M_HOST, SERVER_M_PORT);
+                vector<string> files = getFiles(request.username);
+                string payload = utils::join(files, ' ');
+                Git450Message response = {request.username, "lookup_result", payload};
+                server->send(response.toString(), SERVER_M_HOST, SERVER_M_PORT);
                 std::cout << "Server R has finished sending the response to the main server." << std::endl;
+            } else {
+                std::cerr << "\033[1;31mInvalid request" << request.toString() << "\033[0m" << std::endl;
             }
         }
     }
@@ -116,6 +124,7 @@ public:
 };
 
 int main() {
-
+    ServerR serverR;
+    serverR.run();
     return 0;
 }

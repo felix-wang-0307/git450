@@ -5,6 +5,7 @@
 #include "lib/udp_socket.h"
 #include "lib/encryptor.h"
 #include "lib/utils.h"
+#include "lib/git450protocol.h"
 
 using std::string;
 using std::unordered_map;
@@ -25,7 +26,7 @@ public:
     }
 
     ~ServerA() {
-        std::cout << "DEBUG: Server A is shutting down. Port " << PORT << " released." << std::endl;
+        std::cerr << "DEBUG: Server A is shutting down. Port " << PORT << " released." << std::endl;
         delete server;
     }
 
@@ -46,13 +47,13 @@ public:
     void run() {
         while (true) {
             string data = server->receive();
-            if (utils::getOperation(data) != "AUTH") {
+            Git450Message request = protocol::parseMessage(data);
+            if (request.operation != "auth") {
                 std::cerr << "Invalid operation" << std::endl;
                 continue;
             }
-            auto authData = utils::split(data);
-            const string& username = authData[1];
-            const string& password = authData[2];
+            const string& username = request.username;
+            const string& password = request.payload;
             std::cout << "Server A received username " << username
                       << " and password " << utils::toAstrix(password)
                       << std::endl;
@@ -60,15 +61,14 @@ public:
             debug(ClientTypeToString.at(type));
             if (static_cast<int>(type) >= 0) {
                 std::cout << "Member " << username
-                          << " has been authorized";
+                          << " has been authorized" << std::endl;
             } else {
                 std::cout << "The username " << username
                           << " or password " << utils::toAstrix(password)
-                          << " is incorrect";
+                          << " is incorrect" << std::endl;
             }
-            string auth_message = "AUTH_RESULT " + ClientTypeToString.at(type);
-            debug(auth_message);
-            server->send(auth_message, SERVER_M_HOST, SERVER_M_PORT);
+            Git450Message auth_message = {username, "auth_result", ClientTypeToString.at(type)};
+            server->send(auth_message.toString(), SERVER_M_HOST, SERVER_M_PORT);
         }
     }
 
