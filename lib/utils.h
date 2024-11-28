@@ -9,7 +9,7 @@
 #include <map>
 
 namespace utils {
-    std::vector<std::string> split(const std::string& str, char delimiter = ' ') {
+    std::vector<std::string> split(const std::string &str, char delimiter = ' ') {
         std::vector<std::string> tokens;
         std::string token;
         std::istringstream tokenStream(str);
@@ -19,24 +19,24 @@ namespace utils {
         return tokens;
     }
 
-    std::string join(const std::vector<std::string>& tokens, char delimiter = ' ') {
+    std::string join(const std::vector<std::string> &tokens, char delimiter = ' ') {
         std::string result;
-        for (const std::string& token : tokens) {
+        for (const std::string &token: tokens) {
             result.append(token);
             result.push_back(delimiter);
         }
         return result.substr(0, result.size() - 1);
     }
 
-    std::string getOperation(const std::string& data) {
+    std::string getOperation(const std::string &data) {
         return split(data)[0];
     }
 
-    std::string getUsername(const std::string& data) {
+    std::string getUsername(const std::string &data) {
         return split(data)[1];
     }
 
-    std::string getPayload(const std::string& data) {
+    std::string getPayload(const std::string &data) {
         return data.substr(data.find(' ') + 1);
     }
 
@@ -55,7 +55,15 @@ namespace utils {
 
     std::string toUpper(const std::string &str) {
         std::string result;
-        for (char c : str) {
+        for (char c: str) {
+            result.push_back(c);
+        }
+        return result;
+    }
+
+    std::string toLower(const std::string &str) {
+        std::string result;
+        for (char c: str) {
             result.push_back(c);
         }
         return result;

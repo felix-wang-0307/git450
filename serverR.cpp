@@ -25,7 +25,7 @@ public:
     }
 
     ~ServerR() {
-        std::cout << "DEBUG: Server R is shutting down. Port " << PORT << " released." << std::endl;
+        std::cerr << "DEBUG: Server R is shutting down. Port " << PORT << " released." << std::endl;
         delete server;
     }
 
@@ -52,17 +52,25 @@ public:
     void run() {
         while (true) {
             string data = server->receive();
-            if (utils::getOperation(data) != "LIST") {
+            if (utils::getOperation(data) != "push" && utils::getOperation(data) != "remove" && utils::getOperation(data) != "lookup") {
                 std::cerr << "Invalid operation" << std::endl;
                 continue;
             }
-            auto listData = utils::split(data);
-            const string& username = listData[1];
-            std::cout << "Server R received list request from " << username << std::endl;
-            vector<string> files = getFiles(username);
-            string response = utils::join(files);
-            if (!server->send(response, SERVER_M_HOST, SERVER_M_PORT)) {
-                std::cerr << "Failed to send data to the client" << std::endl;
+            string operation = utils::getOperation(data);
+            string username = utils::getUsername(data);
+            string payload = utils::getPayload(data);
+            if (operation == "push") {
+                addFile(username, payload);
+                std::cout << "Server R has received a push request for " << payload << " from " << username << std::endl;
+            } else if (operation == "remove") {
+                removeFile(username, payload);
+                std::cout << "Server R has received a remove request for " << payload << " from " << username << std::endl;
+            } else if (operation == "lookup") {
+                std::cout << "Server R has received a lookup request from the main server." << std::endl;
+                vector<string> files = getFiles(username);
+                string response = "lookup_result " + utils::join(files);
+                server->send(response, SERVER_M_HOST, SERVER_M_PORT);
+                std::cout << "Server R has finished sending the response to the main server." << std::endl;
             }
         }
     }
@@ -72,6 +80,38 @@ public:
             return repo[username];
         }
         return {};
+    }
+
+    void addFile(const string &username, const string &filename) {
+        if (repo.find(username) != repo.end()) {
+            repo[username].push_back(filename);
+        } else {
+            repo[username] = {filename};
+        }
+    }
+
+    void removeFile(const string &username, const string &filename) {
+        if (repo.find(username) != repo.end()) {
+            vector<string> &files = repo[username];
+            auto it = std::find(files.begin(), files.end(), filename);
+            if (it != files.end()) {
+                files.erase(it);
+            }
+        }
+    }
+
+    void writeRepo(const string &filename = "./data/filenames.txt") {
+        std::ofstream file(filename);
+        if (!file) {
+            std::cerr << "Error opening file for writing: " << filename << std::endl;
+            return;
+        }
+        file << "UserName FileName\n";  // Add header to the file
+        for (const auto &entry: repo) {
+            for (const string &filename: entry.second) {
+                file << entry.first << " " << filename << std::endl;
+            }
+        }
     }
 };
 
