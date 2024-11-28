@@ -1,5 +1,6 @@
 //
-// Created by Waterdog on 2024/11/17.
+// A basic UDP socket class that can be used to create a UDP server or client.
+// This is a universal class. Does not contain the service logic.
 //
 
 #ifndef GIT450_UDP_SOCKET_H

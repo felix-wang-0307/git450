@@ -1,3 +1,8 @@
+//
+// A basic TCP socket class that can be used to create a TCP server or client.
+// This is a universal class. Does not contain the service logic.
+//
+
 #ifndef GIT450_TCP_SOCKET_H
 #define GIT450_TCP_SOCKET_H
 
@@ -33,7 +38,7 @@ public:
         return socket_fd != -1;
     }
 
-    bool send(const std::string& data) {
+    bool send(const std::string &data) {
         int size = ::send(socket_fd, data.c_str(), data.size(), 0);
         std::cout << "Sent: " << data << std::endl;
         return size != -1;
@@ -114,7 +119,7 @@ public:
         }
 
         // Attempt to bind
-        if (::bind(socket_fd, (sockaddr*)&addr, sizeof(addr)) == -1) {
+        if (::bind(socket_fd, (sockaddr *) &addr, sizeof(addr)) == -1) {
             std::cerr << "Bind failed: " << strerror(errno) << std::endl;
             return false;
         }
@@ -130,13 +135,13 @@ public:
         return true;
     }
 
-    TCPSocket* accept() {
+    TCPSocket *accept() {
         int client_sock = ::accept(socket_fd, nullptr, nullptr);
         if (client_sock == -1) {
             std::cerr << "Accept failed: " << strerror(errno) << std::endl;
             return nullptr;
         }
-        TCPSocket* newSocket = new TCPSocket();
+        TCPSocket *newSocket = new TCPSocket();
         newSocket->setSocketFd(client_sock);
         return newSocket;
     }
@@ -151,14 +156,14 @@ public:
         }
     }
 
-    bool connect(const std::string& host, int port) {
+    bool connect(const std::string &host, int port) {
         sockaddr_in addr;
         std::memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port);
         inet_pton(AF_INET, host.c_str(), &addr.sin_addr);
 
-        return ::connect(socket_fd, (sockaddr*)&addr, sizeof(addr)) != -1;
+        return ::connect(socket_fd, (sockaddr *) &addr, sizeof(addr)) != -1;
     }
 };
 
