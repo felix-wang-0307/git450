@@ -39,7 +39,7 @@ struct Git450Message {
 
 namespace protocol {
     // -------- PROTOCOL OPERATIONS --------
-    // Git450 Message Protocol: <OPERATION> <USERNAME> <PAYLOAD>
+    // Git450 Message Protocol: <USERNAME> <OPERATION> <PAYLOAD>
     std::string getUsername(const std::string &data) {
         // Example: "user1 push file1.txt file2.txt file3.txt" -> "user1"
         if (data.empty()) {
@@ -69,8 +69,8 @@ namespace protocol {
 
     Git450Message parseMessage(const std::string &data) {
         return {
-                getOperation(data),
                 getUsername(data),
+                getOperation(data),
                 getPayload(data)
         };
     }
