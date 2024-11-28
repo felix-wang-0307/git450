@@ -59,6 +59,29 @@ namespace utils {
     std::string toAstrix(const std::string &input) {
         return std::string(input.size(), '*');
     }
+
+    // -------- VECTOR OPERATIONS --------
+    template<typename T>
+    bool contains(const std::vector<T> &list, const T &element) {
+        return std::find(list.begin(), list.end(), element) != list.end();
+    }
+
+    // -------- MAP OPERATIONS --------
+    template<typename K, typename V>
+    V getValue(const std::map<K, V> &map, const K &key, const V &default_value = V()) {
+        auto it = map.find(key);
+        if (it == map.end()) {
+            return default_value;
+        }
+        return it->second;
+    }
+
+    // -------- OTHERS  --------
+    void printError(const std::string &message) {
+        std::cerr << "\033[1;31m" << message << "\033[0m" << std::endl;
+    }
 }
+
+
 
 #endif //GIT450_UTILS_H

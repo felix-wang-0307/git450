@@ -46,20 +46,21 @@ public:
         writeFile();
     }
 
-    // Prints logs for a specific user
-    void printLog(const string &username) const {
+    // Converts logs for a specific user to a string
+    string getLogString(const string &username) const {
         std::lock_guard<std::mutex> lock(log_mutex);  // Ensures thread safety when accessing logs
 
         auto it = logs.find(username);
         if (it == logs.end()) {
-            std::cerr << "No logs found for " << username << std::endl;
-            return;
+            return "No logs found for " + username;
         }
 
-        std::cout << "Logs for " << username << ":" << std::endl;
+        std::ostringstream oss;
+        oss << "Logs for " << username << ":\n";
         for (const string &log: it->second) {
-            std::cout << log << std::endl;
+            oss << log << "\n";
         }
+        return oss.str();
     }
 
     // Appends a log for a specific user
