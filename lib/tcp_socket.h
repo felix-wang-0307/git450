@@ -163,7 +163,17 @@ public:
         addr.sin_port = htons(port);
         inet_pton(AF_INET, host.c_str(), &addr.sin_addr);
 
-        return ::connect(socket_fd, (sockaddr *) &addr, sizeof(addr)) != -1;
+        if (::connect(socket_fd, (sockaddr *) &addr, sizeof(addr)) != -1) {
+            status = SocketStatus::CONNECTED;
+            return true;
+        } else {
+            std::cerr << "Failed to connect to " << host << ":" << port << std::endl;
+            return false;
+        }
+    }
+
+    bool disconnect() {
+        return close(socket_fd) != -1;
     }
 };
 
