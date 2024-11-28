@@ -1,5 +1,8 @@
 #include <iostream>
-#include "serverD.h"
+#include "lib/utils.h"
+#include "lib/config.h"
+
+int PORT = config::SERVER_D_PORT;
 
 void bootUp() {
     std::cout << "Server D is up and running using UDP on port " << PORT << std::endl;

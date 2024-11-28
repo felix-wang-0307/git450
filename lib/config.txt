@@ -1,5 +1,0 @@
-server_address=127.0.0.1
-server_d_port=23012
-server_a_port=21012
-client_address=127.0.0.1
-client_port=8080
