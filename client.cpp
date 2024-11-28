@@ -2,17 +2,20 @@
 #include <string>
 #include <vector>
 #include <csignal>
+#include <algorithm>
 #include "lib/tcp_socket.h"
 #include "lib/utils.h"
 #include "lib/config.h"
+#include "lib/git450protocol.h"
 
 using std::string;
+using std::vector;
 
 string SERVER_HOST = config::SERVER_IP;  // All servers are running on the same host 127.0.0.1
 int SERVER_PORT = config::SERVER_M_TCP_PORT;  // Client will connect to Server M using TCP
 
-const std::vector<string> GUEST_COMMANDS = {"lookup"};
-const std::vector<string> MEMBER_COMMANDS = {"lookup", "push", "remove", "deploy", "log"};
+const vector<string> GUEST_COMMANDS = {"lookup"};
+const vector<string> MEMBER_COMMANDS = {"lookup", "push", "remove", "deploy", "log"};
 
 class Client {
 public:
@@ -32,6 +35,7 @@ public:
         } else {
             // Wrong password or username not found
             std::cerr << "The credentials are incorrect. Please try again." << std::endl;
+            delete client;
             exit(1);
         }
     }
@@ -51,19 +55,20 @@ public:
 
     ClientType authenticate(const string &username, const string &password) {
         // Send the username and password to the server
-        string data = "AUTH " + username + " " + password;
-        client->send(data);
-        string response = client->receive();
+        Git450Message request = {username, "auth", password};
+        client->send(request.toString());
+        string _response = client->receive();
+        Git450Message response = protocol::parseMessage(_response);
         // Check the response
-        if (utils::getOperation(response) != "AUTH_RESULT") {
-            std::cerr << "Invalid operation" << std::endl;
-            return ClientType::INVALID;
+        if (response.operation != "auth_result") {
+            std::cerr << "Invalid response from the server" << std::endl;
+            exit(1);
         }
-        string result = utils::getPayload(response);
-        return StringToClientType.at(result);
+        // Convert the payload to ClientType
+        return StringToClientType.at(response.payload);
     }
 
-    bool isOperationValid(const string& operation) {
+    bool isOperationValid(const string &operation) const {
         if (type == ClientType::GUEST) {
             return std::find(GUEST_COMMANDS.begin(), GUEST_COMMANDS.end(), operation) != GUEST_COMMANDS.end();
         } else if (type == ClientType::MEMBER) {
@@ -76,14 +81,14 @@ public:
         while (true) {
             if (type == ClientType::MEMBER) {
                 std::cout << "Please enter the command: " << std::endl
-                << "<lookup <username>>" << std::endl
-                << "<push <filename>>" << std::endl
-                << "<remove <filename>>" << std::endl
-                << "<deploy>" << std::endl
-                << "<log>" << std::endl;
+                          << "<lookup <username>>" << std::endl
+                          << "<push <filename>>" << std::endl
+                          << "<remove <filename>>" << std::endl
+                          << "<deploy>" << std::endl
+                          << "<log>" << std::endl;
             } else { // GUEST
                 std::cout << "Please enter the command: " << std::endl
-                << "<lookup <username>>" << std::endl;
+                          << "<lookup <username>>" << std::endl;
             }
             string command;
             std::getline(std::cin, command);
@@ -93,25 +98,36 @@ public:
                 break;
             }
             // 2. Check if the command is valid for the client type
-            string operation = utils::getOperation(command);
+            vector<string> parts = utils::split(command, ' ');
+            if (parts.empty()) {
+                std::cerr << "Empty command." << std::endl;
+                continue;
+            }
+            string operation = parts[0];
             if (!isOperationValid(operation)) {
                 std::cerr << "Invalid operation: " << operation << std::endl;
                 continue;
             }
-            // 3. If the command is valid, add the username and send it to the server
-            string payload = utils::getPayload(command);
-            string data = utils::join({operation, this->username, payload});
-            client->send(command);
+            // 3. If the command is valid, connect to the server, add the username and send it to the server
+            // Make sure the message complies with Git450 Protocol: <username> <operation> <payload>
+            delete client;
+            client = new TCPClientSocket();
+            if (!client->connect(SERVER_HOST, SERVER_PORT)) {
+                std::cerr << "ERROR: Failed to connect to the server" << std::endl;
+                continue;
+            }
+            string data = username + " " + command;
+            client->send(data);
         }
     }
 };
 
-Client* global_client = nullptr;
+Client *global_client = nullptr;
 
 void handleSigint(int signal) {
     std::cout << "\nCaught signal " << signal << ". Shutting down client..." << std::endl;
     delete global_client; // Ensures the destructor is called
-    std::exit(0);
+    exit(0);
 }
 
 
