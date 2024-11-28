@@ -1,6 +1,6 @@
 #include <string>
 #include <unordered_map>
-#define debug(x) {std::cerr << "DEBUG: " << (x) << std::endl;}
+#define debug(x) {std::cerr << "DEBUG: " << (#x) << " = " << (x) << std::endl;}
 
 using std::string;
 using std::unordered_map;
