@@ -76,9 +76,9 @@ public:
                 client->send(auth_result);
                 std::cout << "The main server has sent the response from server A to client using TCP over port "
                           << SERVER_M_TCP_PORT << std::endl;
-            } else if (utils::contains({"lookup", "deploy", "log"}, request.operation)) {
+            } else if (utils::contains({"lookup", "deploy", "push"}, request.operation)) {
                 // Forward the request to Server R
-                logger->appendLog(request.username, data);
+                logger->appendLog(request);
                 if (!udp_client->send(data, SERVER_IP, SERVER_R_PORT)) {
                     std::cerr << "Failed to send data to Server R" << std::endl;
                     continue;
@@ -89,21 +89,41 @@ public:
                 string result = udp_client->receive();
                 client->send(result);
             } else if (request.operation == "deploy") {
-                // Forward the request to Server D
-                logger->appendLog(request.username, data);
-                if (!udp_client->send(data, SERVER_IP, SERVER_D_PORT)) {
+                // 1. Make a lookup request to Server R
+                logger->appendLog(request);
+                Git450Message lookup_request = {request.username, "lookup", request.payload};
+                if (!udp_client->send(lookup_request.toString(), SERVER_IP, SERVER_R_PORT)) {
                     std::cerr << "Failed to send data to Server D" << std::endl;
                     continue;
                 }
+                std::cout << "The main server has sent the deploy request to server R using UDP over port "
+                          << SERVER_M_UDP_PORT << std::endl;
+                // 2. Get the files data from Server R
+                string result = udp_client->receive();
+                Git450Message lookup_response = protocol::parseMessage(result);
+                if (lookup_response.operation != "lookup_result") {
+                    std::cerr << "Error: Invalid operation from Server R" << std::endl;
+                    continue;
+                }
+                string deploy_files = lookup_response.payload;
+                // 3. Make a deploy request to Server D
+                // Concatenate the username and the files data
+                string deploy_data = request.username + " " + deploy_files;
+                Git450Message deploy_request = {request.username, "deploy", deploy_data};
+                if (!udp_client->send(deploy_request.toString(), SERVER_IP, SERVER_D_PORT)) {
+                    std::cerr << "Failed to send data to Server D" << std::endl;
+                    continue;
+                }
+                // 4. Forward the response to the client
                 std::cout << "The main server has sent the deploy request to server D using UDP over port "
                           << SERVER_M_UDP_PORT << std::endl;
-                // Forward the response to the client
-                string result = udp_client->receive();
+                result = udp_client->receive();
                 client->send(result);
             } else if (request.operation == "log") {
-                logger->appendLog(request.username, data);  // Log the "log" operation
+                logger->appendLog(request);  // Log the "log" operation
                 string log = logger->getLogString(request.username);
                 Git450Message response = {request.username, "log_result", log};
+                client->send(response.toString());
             }
             logger->writeFile();
             delete client;
