@@ -7,7 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <map>
+#include <unordered_map>
 
 namespace utils {
     // -------- BASIC STRING OPERATIONS --------
@@ -66,22 +66,40 @@ namespace utils {
         return std::find(list.begin(), list.end(), element) != list.end();
     }
 
-    // -------- MAP OPERATIONS --------
-    template<typename K, typename V>
-    V getValue(const std::map<K, V> &map, const K &key, const V &default_value = V()) {
-        auto it = map.find(key);
-        if (it == map.end()) {
-            return default_value;
+    // ———— FILE OPERATIONS ————
+    std::unordered_map<std::string, std::vector<std::string>>
+    loadFileRecord(const std::string &filename = "./data/filenames.txt") {
+        // Load file records like:
+        // UserName FileName
+        // user1 file1.txt
+        // user1 file2.txt
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Failed to open file: " << filename << std::endl;
+            return {};
         }
-        return it->second;
+        std::string line;
+        std::getline(file, line);  // Skip the header
+        std::unordered_map<std::string, std::vector<std::string>> repo;
+        while (std::getline(file, line)) {
+            auto data = utils::split(line);
+            std::string username = data[0];
+            std::string filename = data[1];
+            if (repo.find(username) != repo.end()) {
+                repo[username].push_back(filename);
+            } else {
+                repo[username] = {filename};
+            }
+        }
+        return repo;
     }
 
-    // -------- OTHERS  --------
+// -------- OTHERS  --------
     void printError(const std::string &message) {
         std::cerr << "\033[1;31m" << message << "\033[0m" << std::endl;
     }
-}
 
+}
 
 
 #endif //GIT450_UTILS_H

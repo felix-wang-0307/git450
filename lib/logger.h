@@ -6,8 +6,8 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <mutex>
 #include "utils.h"
+#include "git450protocol.h"
 
 using std::string;
 using std::vector;
@@ -18,7 +18,6 @@ public:
     // Member variables
     map<string, vector<string> > logs;
     string log_file_path;
-    mutable std::mutex log_mutex;  // Mutex for thread safety
 
     // Constructor that initializes the log file
     Logger(const string &log_file_path = "./data/logs.txt") : log_file_path(log_file_path) {
@@ -48,8 +47,6 @@ public:
 
     // Converts logs for a specific user to a string
     string getLogString(const string &username) const {
-        std::lock_guard<std::mutex> lock(log_mutex);  // Ensures thread safety when accessing logs
-
         auto it = logs.find(username);
         if (it == logs.end()) {
             return "No logs found for " + username;
@@ -65,14 +62,15 @@ public:
 
     // Appends a log for a specific user
     void appendLog(const string &username, const string &log) {
-        std::lock_guard<std::mutex> lock(log_mutex);  // Ensures thread safety when modifying logs
         logs[username].push_back(log);
+    }
+
+    void appendLog(const Git450Message& message) {
+        logs[message.username].push_back(utils::join({message.operation, message.payload}, ' '));
     }
 
     // Writes all logs to the file
     void writeFile() {
-        std::lock_guard<std::mutex> lock(log_mutex);  // Ensures thread safety when writing logs
-
         std::ofstream file(log_file_path, std::ios::trunc);
         if (!file) {
             std::cerr << "Error opening log file for writing: " << log_file_path << std::endl;
