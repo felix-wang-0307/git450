@@ -95,6 +95,10 @@ namespace utils {
     }
 
 // -------- OTHERS  --------
+    void printLine(const std::string &message) {
+        std::cout << message << std::endl;
+    }
+
     void printError(const std::string &message) {
         std::cerr << "\033[1;31m" << message << "\033[0m" << std::endl;
     }
