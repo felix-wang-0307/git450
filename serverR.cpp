@@ -23,7 +23,7 @@ public:
     ServerR() {
         server = new UDPServerSocket(PORT);
         std::cout << "Server R is up and running using UDP on port " << PORT << std::endl;
-        loadRepo();  // Load the filenames from the file
+        repo = utils::loadFileRecord("./data/filenames.txt");  // Load the filenames from the file
     }
 
     ~ServerR() {
@@ -31,25 +31,6 @@ public:
         delete server;
     }
 
-    void loadRepo(const string &filename = "./data/filenames.txt") {
-        std::ifstream file(filename);
-        if (!file.is_open()) {
-            std::cerr << "Failed to open file: " << filename << std::endl;
-            return;
-        }
-        string line;
-        std::getline(file, line);  // Skip the header
-        while (std::getline(file, line)) {
-            auto data = utils::split(line);
-            string username = data[0];
-            string filename = data[1];
-            if (repo.find(username) != repo.end()) {
-                repo[username].push_back(filename);
-            } else {
-                repo[username] = {filename};
-            }
-        }
-    }
 
     void run() {
         while (true) {
@@ -72,13 +53,13 @@ public:
                 server->send(response.toString(), SERVER_M_HOST, SERVER_M_PORT);
             } else if (request.operation == "lookup") {
                 std::cout << "Server R has received a lookup request from the main server." << std::endl;
-                vector<string> files = getFiles(request.username);
+                vector<string> files = getFiles(request.payload);
                 string payload = utils::join(files, ' ');
                 Git450Message response = {request.username, "lookup_result", payload};
                 server->send(response.toString(), SERVER_M_HOST, SERVER_M_PORT);
                 std::cout << "Server R has finished sending the response to the main server." << std::endl;
             } else {
-                std::cerr << "\033[1;31mInvalid request" << request.toString() << "\033[0m" << std::endl;
+                std::cerr << "\033[1;31mInvalid request: " << request.toString() << "\033[0m" << std::endl;
             }
         }
     }
