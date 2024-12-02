@@ -80,7 +80,7 @@ public:
     void run() {
         while (true) {
             if (type == ClientType::MEMBER) {
-                std::cout << "Please enter the command: " << std::endl
+                std::cout << "\nPlease enter the command: " << std::endl
                           << "<lookup <username>>" << std::endl
                           << "<push <filename>>" << std::endl
                           << "<remove <filename>>" << std::endl
@@ -110,8 +110,8 @@ public:
             }
             // 3. If the command is valid, connect to serverM, add the username and send it to serverM
             // Make sure the message complies with Git450 Protocol: <username> <operation> <payload>
-            delete client;
-            client = new TCPClientSocket();
+            delete client;  // Make sure the previous connection is closed
+            client = new TCPClientSocket();  // Create a new connection for EACH REQUEST (non-persistent)
             if (!client->connect(SERVER_HOST, SERVER_PORT)) {
                 std::cerr << "ERROR: Failed to connect to the server" << std::endl;
                 continue;
@@ -125,6 +125,16 @@ public:
                     request.payload = request.username;
                 }
                 std::cout << request.username << " sent a lookup request to the main server." << std::endl;
+            } else if (request.operation == "push") {
+                if (request.payload.empty()) {
+                    std::cout << "Error: Filename is required. Please specify a filename to push." << std::endl;
+                    std::cout << "—--Start a new request—--" << std::endl;
+                    continue;
+                }
+            } else {
+                // log, remove, deploy
+                std::cout << request.username << " sent a "
+                          << request.operation << " request to the main server." << std::endl;
             }
             client->send(request.toString());
             // 5. Receive the response from serverM and parse the data
@@ -135,48 +145,67 @@ public:
                           << SERVER_PORT << "." << std::endl;
                 vector<string> files = utils::split(response.payload, ' ');
                 if (files.empty()) {
-                    std::cout << request.username << " does not exist. Please try again." << std::endl;
+                    string lookup_username = request.payload.empty() ? request.username : request.payload;
+                    std::cout << lookup_username << " does not exist. Please try again." << std::endl;
                     continue;
                 }
-                std::cout << response.username << ": "
-                          << utils::join(files, '\n');
+                std::cout << utils::join(files, '\n') << std::endl;
             } else if (response.operation == "push_result") {
+                string file_to_push = request.payload;
                 if (response.payload == "already_exist") {
                     //TODO: change the username
-                    std::cout << " exists in <username>’s repository, do you want to overwrite (Y/N)?" << std::endl;
+                    std::cout << file_to_push << " exists in "
+                              << request.username << "’s repository, do you want to overwrite (Y/N)?"
+                              << std::endl;
                     std::getline(std::cin, command);
                     command = utils::trim(command);
-                    // Send overwrite request
-                    Git450Message push_overwrite_request = request;
+                    // Make sure the command is either "Y" or "N"
+                    Git450Message push_overwrite_request = {
+                            request.username,
+                            "push_overwrite",
+                            file_to_push + " "
+                    };
                     if (command == "Y" || command == "N") {
-                        push_overwrite_request.payload = command;
+                        push_overwrite_request.payload += command;
                     } else {
                         utils::printError("Invalid command. Will abandon the overwrite.");
-                        push_overwrite_request.payload = "ABANDON";
+                        push_overwrite_request.payload = " ABANDON";
                     }
-                    delete client;
-                    client = new TCPClientSocket();
-                    if (!client->connect(SERVER_HOST, SERVER_PORT)) {
-                        std::cerr << "ERROR: Failed to connect to the server" << std::endl;
-                        continue;
-                    }
+                    // Send the overwrite request (without closing the connection)
                     client->send(push_overwrite_request.toString());
                     // Receive overwrite response (receipt)
                     data = client->receive();
                     Git450Message push_overwrite_response = protocol::parseMessage(data);
                     if (push_overwrite_response.operation == "push_overwrite_result") {
-                        //TODO: manipulate the overwrite
-
+                        vector<string> tokens = utils::split(push_overwrite_response.payload);
+                        const string &filename = tokens[0];
+                        const string &result = tokens[1];
+                        if (result == "ok") {
+                            std::cout << filename << " pushed successfully." << std::endl;
+                        } else {
+                            std::cout << filename << " was not pushed successfully." << std::endl;
+                        }
                     }
                 } else {
                     std::cout << request.payload << " pushed successfully" << std::endl;
                 }
             } else if (response.operation == "remove_result") {
-                std::cout << "Removed file successfully" << std::endl;
+                std::cout << "The remove request was successful." << std::endl;
             } else if (response.operation == "deploy_result") {
-                std::cout << "Deployed files successfully" << std::endl;
+                vector<string> files = utils::split(response.payload, ' ');
+                if (files.empty()) {
+                    std::cout << "The client received the response from the main server using TCP over port "
+                              << SERVER_PORT
+                              << ", and no files were found for deployment." << std::endl;
+                } else {
+                    std::cout << "The client received the response from the main server using TCP over port "
+                              << SERVER_PORT
+                              << ". The following files in his/her repository have been deployed." << std::endl;
+                    // print deployed files in lines
+                    std::cout << utils::join(files, '\n') << std::endl;
+                }
             } else if (response.operation == "log_result") {
-                std::cout << "Log for " << response.username << ": " << response.payload << std::endl;
+                std::cout << response.payload << std::endl;
             } else {
                 utils::printError("Invalid response from the server: " + response.toString());
             }
