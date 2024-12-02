@@ -8,14 +8,10 @@ OBJS := $(SRCS:.cpp=)
 all: $(OBJS)
 
 run_client:
-	./client guest guest
+	./client test test
 
-run:
-	./serverA
-	./serverD
+run_server_M:
 	./serverM
-	./serverR
-	./client guest guest
 
 # Rule to compile each .cpp file into an executable
 %: %.cpp

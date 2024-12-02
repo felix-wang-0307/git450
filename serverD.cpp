@@ -2,10 +2,10 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
-#include "lib/utils.h"
-#include "lib/config.h"
-#include "lib/udp_socket.h"
-#include "lib/git450protocol.h"
+#include "include/utils.h"
+#include "include/config.h"
+#include "include/udp_socket.h"
+#include "include/git450protocol.h"
 
 using std::string;
 using std::unordered_map;

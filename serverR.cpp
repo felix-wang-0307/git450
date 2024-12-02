@@ -2,10 +2,10 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
-#include "lib/utils.h"
-#include "lib/config.h"
-#include "lib/udp_socket.h"
-#include "lib/git450protocol.h"
+#include "include/utils.h"
+#include "include/config.h"
+#include "include/udp_socket.h"
+#include "include/git450protocol.h"
 
 using std::string;
 using std::unordered_map;
@@ -101,14 +101,26 @@ public:
             if (request.operation == "push") {
                 std::cout << "Server R has received a push request for " << request.payload
                           << " from " << request.username << std::endl;
-                bool result = addFile(request.username, request.payload);
-                writeRepo();
-                string payload = result ? "ok" : "already_exist";
+                string file_to_push = request.payload;
+                bool result = addFile(request.username, file_to_push);
+                string payload;
+                if (result) {
+                    // File added successfully (no duplicate)
+                    payload = "ok";
+                    writeRepo();
+                    std::cout << file_to_push << " uploaded successfully." << std::endl;
+                } else {
+                    // File already exists
+                    payload = "already_exist";
+                    std::cout << file_to_push << " exists in "
+                              << request.username << "'s repository; requesting overwrite confirmation."
+                              << std::endl;
+                }
                 Git450Message response = {request.username, "push_result", payload};
                 server->send(response.toString(), SERVER_M_HOST, SERVER_M_PORT);
             } else if (request.operation == "push_overwrite") {
-                std::cout << "Server R has received an overwrite request for " << request.payload
-                          << " from " << request.username << std::endl;
+//                std::cout << "Server R has received an overwrite request for " << request.payload
+//                          << " from " << request.username << std::endl;
                 // The payload format: "filename Y/N"
                 vector<string> tokens = utils::split(request.payload);
                 string &filename = tokens[0];
@@ -117,8 +129,10 @@ public:
                 if (is_overwrite) {
                     overwriteFile(request.username, filename);
                     writeRepo();
+                    std::cout << "User requested overwrite; overwrite successful." << std::endl;
                     payload += "ok";
                 } else {
+                    std::cout << "Overwrite denied." << std::endl;
                     payload += "abandoned";
                 }
                 Git450Message response = {request.username, "push_overwrite_result", payload};

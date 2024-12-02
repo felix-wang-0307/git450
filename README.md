@@ -7,7 +7,7 @@ This project implements a Git-like project version control system using **C++11*
 ## Files
 - `README.md`: This file.
 - `makefile`: The Makefile for the project.
-- lib
+- include
   - `git450protocol.h`: provides the protocol for the Git450 application.
   - `config.h`: provides some configuration parameters for the project.
   - `udp_socket.h`: provides a minimal **UDP socket class** for simplifying the socket programming.
@@ -82,7 +82,9 @@ Example:
     ```
 
 ### TCP/UDP Socket Classes
-To simplify the socket programming, I implemented two classes, `TCPSocket` and `UDPSocket`, which encapsulate the socket programming details. The prototypes of the classes are as follows:
+To simplify the socket programming, I implemented two classes, `TCPSocket` and `UDPSocket`, which encapsulate the socket programming details. 
+
+See `include/tcp_socket.h` and `include/udp_socket.h` for more details.
 
 ## Future Work
 1. Apply multi-threading to the server to handle multiple clients simultaneously (current version is single-threaded, and a second client must wait for the first client to finish).

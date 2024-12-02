@@ -1,11 +1,11 @@
 #include <iostream>
 #include <algorithm>
-#include "lib/tcp_socket.h"
-#include "lib/udp_socket.h"
-#include "lib/utils.h"
-#include "lib/config.h"
-#include "lib/logger.h"
-#include "lib/git450protocol.h"
+#include "include/tcp_socket.h"
+#include "include/udp_socket.h"
+#include "include/utils.h"
+#include "include/config.h"
+#include "include/logger.h"
+#include "include/git450protocol.h"
 
 using namespace config;
 using std::string;
