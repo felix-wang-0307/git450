@@ -46,15 +46,7 @@ public:
     }
 
     void deployFiles(const string &username, const vector<string> &user_files) {
-        if (deployed.find(username) != deployed.end()) {
-            for (const string &filename: user_files) {
-                if (!utils::contains(deployed[username], filename)) {
-                    deployed[username].push_back(filename);
-                }
-            }
-        } else {
-            deployed[username] = user_files;
-        }
+        deployed[username] = user_files;  // Overwrite the file records
     }
 
     void run() {
@@ -79,6 +71,7 @@ public:
             } else {
                 std::cerr << "\033[1;31mInvalid request" << request.toString() << "\033[0m" << std::endl;
             }
+            std::cout << std::endl;
         }
     }
 };

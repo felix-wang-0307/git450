@@ -160,10 +160,12 @@ public:
                 std::cout << "The main server has sent the response from server A to client using TCP over port "
                           << SERVER_M_TCP_PORT << std::endl;
             } else if (request.operation == "lookup") {
+                logger->appendLog(request);
                 string result = handleLookup(request);
                 client->send(result);
                 std::cout << "The main server has sent the response to the client." << std::endl;
             } else if (request.operation == "push") {
+                logger->appendLog(request);
                 Git450Message response = handlePush(request);
                 if (response.payload == "already_exist") {
                     // Ask the client for overwrite confirmation
@@ -181,6 +183,7 @@ public:
                     std::cout << "The main server has sent the response to the client." << std::endl;
                 }
             } else if (request.operation == "remove") {
+                logger->appendLog(request);
                 string result = handleRemove(request);
                 client->send(result);
                 std::cout << "The main server has sent the response to the client." << std::endl;
