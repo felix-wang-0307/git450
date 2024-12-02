@@ -1,16 +1,9 @@
 # Git450
-
 ## Introduction
 
 The Socket Programming Project of EE450, 2024 Fall, University of Southern California.
 
 This project implements a Git-like project version control system using **C++11** and UNIX socket libraries.
-
-## Author: Haoyu Wang
-
-## USC ID: 1900377012
-
-## [GitHub Repository](https://github.com/felix-wang-0307/git450)
 
 ## Works Done
 
@@ -18,7 +11,7 @@ This project implements a Git-like project version control system using **C++11*
 
 ## Files
 
-- include
+- include/
   - `git450protocol.h`: provides the protocol for the Git450 application.
   - `config.h`: provides some configuration parameters for the project.
   - `udp_socket.h`: provides a minimal **UDP socket class** for simplifying the socket programming.
@@ -26,11 +19,12 @@ This project implements a Git-like project version control system using **C++11*
   - `utils.h`: provides some utility functions like `split` and `join`.
   - `logger.h`: provides a simple logger for `log` command.
   - `encryptor.h`: provides a encryptor for the project.
-- data
+- data/
   - `members.txt`: stores the members' credentials.
   - `filenames.txt`: stores the files of each user in the **repository**.
   - `deployed.txt`: stores the deployed files in the **deployment server**.
   - `log.txt`: stores the logs of the users.
+### Source Files
 - `serverM.cpp`: The main program for the ServerM (Main Server).
 - `serverA.cpp`: The main program for the ServerA (Authentication Server).
 - `serverD.cpp`: The main program for the ServerD (Deployment Server).
@@ -40,10 +34,22 @@ This project implements a Git-like project version control system using **C++11*
 
 ## Reused Code
 
-The project does not include any reused code from other sources.
+This project does not reuse external code. All header files in `include/` were written from scratch, with assistance from GitHub Copilot for designs like `tcp_socket.h` and `udp_socket.h`.
 
-All the header files in the `include` directory are written by myself, but many designs, including `tcp_socket.h` and
-`udp_socket.h`, are assisted by GitHub Copilot.
+## Idiosyncrasy
+**Some** screen-printed outputs (specially, the error messages) are in **color** to make the output more readable.
+They are implemented like this:
+```cpp
+// include/utils.h
+void printError(const std::string &message) {
+    // Print the message in red color
+    std::cerr << "\033[1;31m" << message << "\033[0m" << std::endl;
+}
+```
+If the project is judged by a system (like Online Judges), **some** of the output may not match the expected output string.
+But I believe this project is judged by TAs' hardworking hands, so I hope this feature can make the output more readable.
+
+**If it needs to be deleted, please email me and I will send a revised version.**
 
 ## Runtime Environment
 
@@ -51,9 +57,9 @@ All the header files in the `include` directory are written by myself, but many 
     - You can install docker according to [USC CSCI-104 Docker Tutorial](https://github.com/csci104/docker) to run the
       project.
     - *Might also* work on macOS or other Linux distributions, but not guaranteed.
-- Compiler: g++ 9.3.0
+- Compiler: g++ 9.3.0 or higher
 - C++ Standard: C++11 or higher
-- Make: GNU Make 4.2.1
+- Make: GNU Make 4.2.1 or higher
 
 ## Implementation
 
@@ -61,26 +67,28 @@ All the header files in the `include` directory are written by myself, but many 
 
 ![img_1.png](img_1.png)
 
+### Git450 Application-Layer Protocol
+
+A Git450 protocol is designed to facilitate the communication between the client and the server.
+It runs between the client and the server, and between the servers. **NOT** in user's command lines. User commands are
+parsed and translated into Git450 protocol by the client, and the server processes the Git450 protocol and returns the
+result to the client.
+
+The protocol is designed as follows:
+
 ```plaintext
 [username] [operation] [payload]
 ```
 
 - username: the username of the client.
 - operation (client): one of the following:
-    - `auth`: Authentication operation
-        - This should **not** be in command. It should be sent automatically when a client boots up.
-    - `lookup <username>`: Lookup all the files of a user.
-        - If `<username>` is empty, lookup the files of the current user.
-    - `push <filename>`: Push a file to the repo.
-    - `remove <filename>`: Remove a file from the repo.
-    - `deploy`: Deploy the pushed files in the repo to the deployment server.
-    - `log`: Get the log of the user (i.e. the command he/she has sent).
+  - auth: Authentication (sent automatically on client startup).
+  - lookup <username>: List files of a user.
+  - push <filename>: Upload a file to the repo.
+  - remove <filename>: Delete a file from the repo.
+  - deploy: Deploy repo files to the server.
+  - log: Retrieve user logs.
 - operation (server): same as above with each operation suffixed with `_result`.
-    - `auth_result <result>`: Authentication result.
-        - `<result>` can be one of the following:
-            - `MEMBER`: The user is a member.
-            - `NON_MEMBER`: The user is not a member.
-            - `WRONG_PASSWORD`: The password is wrong.
 - payload: the payload (or the data) of the operation.
 
 Example:
@@ -132,14 +140,6 @@ connection after each request/response.
 
 Especially for TCP, the client and server handshake each time before a request.
 
-### Git450 Application-Layer Protocol
-
-A Git450 protocol is designed to facilitate the communication between the client and the server.
-It runs between the client and the server, and between the servers. **NOT** in user's command lines. User commands are
-parsed and translated into Git450 protocol by the client, and the server processes the Git450 protocol and returns the
-result to the client.
-
-The protocol is designed as follows:
 
 ### TCP/UDP Socket Classes
 
@@ -168,7 +168,6 @@ Thanks to the following resources and tools:
 - [C++11 Reference](https://en.cppreference.com/w/cpp/11)
 - [GitHub Copilot](https://copilot.github.com/)
 
-Thanks to the verse that inspired me not to give up the gracious 15 points after endlessly tackling the fancy bugs and
+Thanks to the verse that inspired me not to give up the gracious 15 points when endlessly tackling the fancy bugs and
 the beautiful Segmentation Faults:
-> Isaiah 40:31 But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will
-> run and not grow weary, they will walk and not be faint.
+> Isaiah 40:31 *But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint.*
