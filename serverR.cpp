@@ -60,13 +60,18 @@ public:
 
     bool removeFile(const string &username, const string &filename) {
         if (repo.find(username) != repo.end()) {
+            // User exists
             vector<string> &files = repo[username];
             auto it = std::find(files.begin(), files.end(), filename);
             if (it != files.end()) {
+                // File exists
                 files.erase(it);
                 return true;
             }
+            // File does not exist
+            return false;
         }
+        // User does not exist
         return false;
     }
 
@@ -136,6 +141,7 @@ public:
             } else {
                 std::cerr << "\033[1;31mInvalid request: " << request.toString() << "\033[0m" << std::endl;
             }
+            std::cout << std::endl;
         }
     }
 };
