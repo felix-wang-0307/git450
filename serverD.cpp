@@ -11,7 +11,7 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
-int PORT = config::SERVER_R_PORT;
+int PORT = config::SERVER_D_PORT;
 string SERVER_M_HOST = config::SERVER_IP;
 int SERVER_M_PORT = config::SERVER_M_UDP_PORT;
 
@@ -45,16 +45,8 @@ public:
         }
     }
 
-    void deployFiles(const string &username, const vector<string>& user_files) {
-        if (deployed.find(username) != deployed.end()) {
-            for (const string &filename: user_files) {
-                if (!utils::contains(deployed[username], filename)) {
-                    deployed[username].push_back(filename);
-                }
-            }
-        } else {
-            deployed[username] = user_files;
-        }
+    void deployFiles(const string &username, const vector<string> &user_files) {
+        deployed[username] = user_files;  // Overwrite the file records
     }
 
     void run() {
@@ -63,17 +55,23 @@ public:
             Git450Message request = protocol::parseMessage(data);
             vector<string> tokens = utils::split(request.payload);
             string deploy_username = tokens[0];
+//            debug(deploy_username);
             vector<string> user_files(tokens.begin() + 1, tokens.end());
+//            debug(utils::join(user_files));
             if (request.operation == "deploy") {
                 std::cout << "Server D has received a deploy request from the main server." << std::endl;
                 deployFiles(deploy_username, user_files);
                 writeDeployedFile();
-                Git450Message response = {request.username, "deploy_result", "ok"};
+                std::cout << "Server D has deployed the user " << deploy_username
+                          << "’s repository." << std::endl;
+                string payload = utils::join(user_files);
+                Git450Message response = {request.username, "deploy_result", payload};
                 server->send(response.toString(), SERVER_M_HOST, SERVER_M_PORT);
                 std::cout << "Server D has finished sending the response to the main server." << std::endl;
             } else {
                 std::cerr << "\033[1;31mInvalid request" << request.toString() << "\033[0m" << std::endl;
             }
+            std::cout << std::endl;
         }
     }
 };

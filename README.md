@@ -15,6 +15,11 @@ This project implements a Git-like project version control system using **C++11*
   - `utils.h`: provides some utility functions like `split` and `join`.
   - `logger.h`: provides a simple logger for `log` command.
   - `encryptor.h`: provides a encryptor for the project.
+- serverM.cpp: The main program for the ServerM (Main Server).
+- serverA.cpp: The main program for the ServerA (Authentication Server).
+- serverD.cpp: The main program for the ServerD (Deployment Server).
+- serverR.cpp: The main program for the ServerR (Repo Server).
+- client.cpp: The main program for the client.
 
 ## Runtime Environment
 - OS: Ubuntu 20.04
@@ -48,7 +53,12 @@ The protocol is designed as follows:
 - operation (client): one of the following:
   - `auth`: Authentication operation
     - This should **not** be in command. It should be sent automatically when a client boots up.
-  - `lookup <username>`: Lookup the files of a user.
+  - `lookup <username>`: Lookup all the files of a user.
+    - If `<username>` is empty, lookup the files of the current user.
+  - `push <filename>`: Push a file to the repo.
+  - `remove <filename>`: Remove a file from the repo.
+  - `deploy`: Deploy the pushed files in the repo to the deployment server.
+  - `log`: Get the log of the user (i.e. the command he/she has sent).
 - operation (server): same as above with each operation suffixed with `_result`.
 - payload: the payload (or the data) of the operation.
 
@@ -78,12 +88,12 @@ To simplify the socket programming, I implemented two classes, `TCPSocket` and `
 1. Apply multi-threading to the server to handle multiple clients simultaneously (current version is single-threaded, and a second client must wait for the first client to finish).
 
 ## Acknowledgement
-Thanks to Professor [Ali Zahid](https://viterbi.usc.edu/directory/faculty/Zahid/Ali) and TAs for the guidance and support in EE450.
+Thanks to Professor [Ali Zahid](https://viterbi.usc.edu/directory/faculty/Zahid/Ali) and TAs for the guidance and support in my cruise at EE450.
 
 Thanks to the following resources and tools:
 - [Computer Networking: A Top-Down Approach](https://www.amazon.com/Computer-Networking-Top-Down-Approach-7th/dp/0133594149)
 - [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/html/)
-- [C++11 Standard](https://en.cppreference.com/w/cpp/11)
+- [C++11 Reference](https://en.cppreference.com/w/cpp/11)
 - [GitHub Copilot](https://copilot.github.com/)
 
 Thanks to the verse that inspired me not to give up the gracious 15 points after endlessly tackling the fancy bugs and the beautiful Segmentation Faults:

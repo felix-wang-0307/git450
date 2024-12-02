@@ -44,6 +44,10 @@ public:
         }
     }
 
+    bool findIfMemberExists(const string &username) {
+        return members.find(username) != members.end();
+    }
+
     void run() {
         while (true) {
             string data = server->receive();
@@ -58,8 +62,7 @@ public:
                       << " and password " << utils::toAstrix(password)
                       << std::endl;
             ClientType type = authenticate(username, password);
-            debug(ClientTypeToString.at(type));
-            if (static_cast<int>(type) >= 0) {
+            if (static_cast<int>(type) >= 1) {
                 std::cout << "Member " << username
                           << " has been authorized" << std::endl;
             } else {
@@ -69,6 +72,7 @@ public:
             }
             Git450Message auth_message = {username, "auth_result", ClientTypeToString.at(type)};
             server->send(auth_message.toString(), SERVER_M_HOST, SERVER_M_PORT);
+            std::cout << std::endl;
         }
     }
 
