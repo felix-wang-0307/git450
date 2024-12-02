@@ -94,15 +94,21 @@ namespace utils {
         return repo;
     }
 
-// -------- OTHERS  --------
-    void printLine(const std::string &message) {
-        std::cout << message << std::endl;
+    // -------- OTHERS  --------
+    void printInfo(const std::string &message) {
+        // print in green color
+        std::cout << "\033[1;32m" << message << "\033[0m" << std::endl;
     }
 
     void printError(const std::string &message) {
+        // Print the message in red color
         std::cerr << "\033[1;31m" << message << "\033[0m" << std::endl;
     }
 
+    void printWarning(const std::string &message) {
+        // Print the message in yellow color
+        std::cout << "\033[1;33m" << message << "\033[0m" << std::endl;
+    }
 }
 
 

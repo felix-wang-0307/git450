@@ -54,8 +54,9 @@ public:
 
         std::ostringstream oss;
         oss << "Logs for " << username << ":\n";
+        int log_count = 1;
         for (const string &log: it->second) {
-            oss << log << "\n";
+            oss << log_count++ << ". " << log << "\n";
         }
         return oss.str();
     }

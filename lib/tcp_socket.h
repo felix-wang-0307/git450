@@ -14,6 +14,8 @@
 #include <cstring>
 #include <arpa/inet.h>
 
+#include "utils.h"
+
 #define BUFFER_SIZE 1024
 
 enum SocketStatus {
@@ -40,7 +42,7 @@ public:
 
     bool send(const std::string &data) {
         int size = ::send(socket_fd, data.c_str(), data.size(), 0);
-        std::cout << "Sent: " << data << std::endl;
+        utils::printInfo("Sent: " + data);
         return size != -1;
     }
 
