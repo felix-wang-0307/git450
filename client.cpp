@@ -27,7 +27,7 @@ public:
         bootUp();
         type = authenticate(username, password);
         if (type == ClientType::GUEST) {
-            this->username = "guest";
+            this->username = "Guest";
             std::cout << "You have been granted guest access." << std::endl;
         } else if (type == ClientType::MEMBER) {
             this->username = username;
@@ -54,6 +54,9 @@ public:
     }
 
     ClientType authenticate(const string &username, const string &password) {
+        if (username == "guest" && password == "guest") {
+            return ClientType::GUEST;
+        }
         // Send the username and password to the server
         Git450Message request = {username, "auth", password};
         client->send(request.toString());
@@ -80,7 +83,7 @@ public:
     void run() {
         while (true) {
             if (type == ClientType::MEMBER) {
-                std::cout << "\nPlease enter the command: " << std::endl
+                std::cout << "Please enter the command: " << std::endl
                           << "<lookup <username>>" << std::endl
                           << "<push <filename>>" << std::endl
                           << "<remove <filename>>" << std::endl
@@ -95,6 +98,7 @@ public:
             command = utils::trim(command);  // Remove leading and trailing spaces
             // 1. Check if the command is "exit"
             if (command == "exit") {
+                std::cout << "Bye! Shutting down the client..." << std::endl;
                 break;
             }
             // 2. Check if the command is valid for the client type
@@ -105,8 +109,13 @@ public:
             }
             string operation = parts[0];
             if (!isOperationValid(operation)) {
-                std::cerr << "Invalid operation: " << operation << std::endl;
-                continue;
+                if (type == ClientType::GUEST) {
+                    utils::printError("Guests can only use the lookup command.");
+                    continue;
+                } else {
+                    utils::printError("Invalid operation: " + operation);
+                    continue;
+                }
             }
             // 3. If the command is valid, connect to serverM, add the username and send it to serverM
             // Make sure the message complies with Git450 Protocol: <username> <operation> <payload>
@@ -121,6 +130,12 @@ public:
             Git450Message request = protocol::parseMessage(data);
             if (request.operation == "lookup") {
                 if (request.payload.empty()) {
+                    if (type == ClientType::GUEST) {
+                        std::cout << "Error: Username is required. Please specify a username to lookup." << std::endl;
+                        std::cout << "—--Start a new request—--" << std::endl;
+                        continue;
+                    }
+                    // If the payload is empty, use the username as the payload
                     std::cout << "Username is not specified. Will lookup " << request.username << ".\n";
                     request.payload = request.username;
                 }
@@ -131,8 +146,14 @@ public:
                     std::cout << "—--Start a new request—--" << std::endl;
                     continue;
                 }
+            } else if (request.operation == "remove")  {
+                if (request.payload.empty()) {
+                    std::cout << "Error: Filename is required. Please specify a filename to remove." << std::endl;
+                    std::cout << "—--Start a new request—--" << std::endl;
+                    continue;
+                }
             } else {
-                // log, remove, deploy
+                // log, deploy
                 std::cout << request.username << " sent a "
                           << request.operation << " request to the main server." << std::endl;
             }
@@ -141,15 +162,22 @@ public:
             data = client->receive();
             Git450Message response = protocol::parseMessage(data);
             if (response.operation == "lookup_result") {
+                // payload format: "status filename1 filename2 ..."
                 std::cout << "The client received the response from the main server using TCP over port "
                           << SERVER_PORT << "." << std::endl;
-                vector<string> files = utils::split(response.payload, ' ');
-                if (files.empty()) {
-                    string lookup_username = request.payload.empty() ? request.username : request.payload;
-                    std::cout << lookup_username << " does not exist. Please try again." << std::endl;
-                    continue;
+                string user_to_lookup = request.payload.empty() ? request.username : request.payload;
+                vector<string> tokens = utils::split(response.payload, ' ');
+                string status = tokens[0];
+                if (status == "user_not_exist") {
+                    std::cout << user_to_lookup << " does not exist. Please try again." << std::endl;
+                } else if (status == "no_files") {
+                    std::cout << "Empty repository." << std::endl;
+                } else {
+                    std::cout << "The following files are found in " << user_to_lookup << "’s repository." << std::endl;
+                    vector<string> files(tokens.begin() + 1, tokens.end());
+                    // print files in lines
+                    std::cout << utils::join(files, '\n') << std::endl;
                 }
-                std::cout << utils::join(files, '\n') << std::endl;
             } else if (response.operation == "push_result") {
                 string file_to_push = request.payload;
                 if (response.payload == "already_exist") {
@@ -169,7 +197,7 @@ public:
                         push_overwrite_request.payload += command;
                     } else {
                         utils::printError("Invalid command. Will abandon the overwrite.");
-                        push_overwrite_request.payload = " ABANDON";
+                        push_overwrite_request.payload = "ABANDON";
                     }
                     // Send the overwrite request (without closing the connection)
                     client->send(push_overwrite_request.toString());
@@ -190,7 +218,12 @@ public:
                     std::cout << request.payload << " pushed successfully" << std::endl;
                 }
             } else if (response.operation == "remove_result") {
-                std::cout << "The remove request was successful." << std::endl;
+                string remove_result = response.payload;
+                if (remove_result == "not_exist") {
+                    std::cout << "The file does not exist in the repository." << std::endl;
+                } else {
+                    std::cout << "The remove request was successful." << std::endl;
+                }
             } else if (response.operation == "deploy_result") {
                 vector<string> files = utils::split(response.payload, ' ');
                 if (files.empty()) {
@@ -209,6 +242,7 @@ public:
             } else {
                 utils::printError("Invalid response from the server: " + response.toString());
             }
+            utils::printInfo("\n—--Start a new request—--");
         }
     }
 
