@@ -1,11 +1,11 @@
 #include <iostream>
 #include <unordered_map>
 #include <string>
-#include "lib/config.h"
-#include "lib/udp_socket.h"
-#include "lib/encryptor.h"
-#include "lib/utils.h"
-#include "lib/git450protocol.h"
+#include "include/config.h"
+#include "include/udp_socket.h"
+#include "include/encryptor.h"
+#include "include/utils.h"
+#include "include/git450protocol.h"
 
 using std::string;
 using std::unordered_map;

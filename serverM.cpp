@@ -1,11 +1,11 @@
 #include <iostream>
 #include <algorithm>
-#include "lib/tcp_socket.h"
-#include "lib/udp_socket.h"
-#include "lib/utils.h"
-#include "lib/config.h"
-#include "lib/logger.h"
-#include "lib/git450protocol.h"
+#include "include/tcp_socket.h"
+#include "include/udp_socket.h"
+#include "include/utils.h"
+#include "include/config.h"
+#include "include/logger.h"
+#include "include/git450protocol.h"
 
 using namespace config;
 using std::string;
@@ -204,10 +204,13 @@ public:
                     continue;
                 }
                 std::cout << "The main server received the lookup response from server R." << std::endl;
-                string deploy_files = lookup_response.payload;
+                vector<string> tokens = utils::split(lookup_response.payload);
+                // The first token is the status, the rest are the files
+                vector<string> files_to_deploy(tokens.begin() + 1, tokens.end());
                 // 3. Make a deploy request to Server D
                 // Concatenate the username and the files data
-                string deploy_data = request.username + " " + deploy_files;
+                // format: "username file1 file2 file3 ..."
+                string deploy_data = request.username + " " + utils::join(files_to_deploy);
                 Git450Message deploy_request = {request.username, "deploy", deploy_data};
                 if (!udp_client->send(deploy_request.toString(), SERVER_IP, SERVER_D_PORT)) {
                     utils::printError("Failed to send data to Server D");
