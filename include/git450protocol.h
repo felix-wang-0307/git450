@@ -8,7 +8,8 @@
 #include <string>
 #include "utils.h"
 
-struct Git450Message {
+class Git450Message {
+public:
     // Git450 Message Protocol: <USERNAME> <OPERATION> <PAYLOAD (optional)>
     std::string username;
     std::string operation;

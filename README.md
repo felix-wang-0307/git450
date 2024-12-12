@@ -1,13 +1,21 @@
-# Git450
+# Git450 v0.2
 ## Introduction
 
-The Socket Programming Project of EE450, 2024 Fall, University of Southern California.
+The Socket Programming Project of EE450, 2024 Fall, University of Southern California. Professor: [Ali Zahid](https://viterbi.usc.edu/directory/faculty/Zahid/Ali).
 
-This project implements a Git-like project version control system using **C++11** and UNIX socket libraries.
+**The original ideas and high-level design of this project come from the requirements document provided by the professor.**
 
-## Works Done
+This project implements a Git-like project version control system using **C++11** and UNIX socket libraries, running on a command-line interface (e.g. `zsh` or `bash`).
 
-- [x] Implement all the required operations: `lookup`, `push`, `remove`, `deploy`, `log`.
+## Features
+
+- **Distributed System**: The project is divided into four servers: **ServerA** (Authentication Server), **ServerD**
+  (Deployment Server), **ServerR** (Repo Server), and **ServerM** (Main Server).
+
+- **Custom Protocol**: A custom protocol is designed for the communication between the client and the servers.
+
+- **Encapsulated Socket Classes**: Two classes, `TCPSocket` and `UDPSocket`, are implemented to simplify the socket
+  programming.
 
 ## Files
 
@@ -32,34 +40,50 @@ This project implements a Git-like project version control system using **C++11*
 - `client.cpp`: The main program for the client.
 - `makefile`: The Makefile for the project.
 
-## Reused Code
-
-This project does not reuse external code. All header files in `include/` were written from scratch, with assistance from GitHub Copilot for designs like `tcp_socket.h` and `udp_socket.h`.
-
-## Idiosyncrasy
-**Some** screen-printed outputs (specially, the error messages) are in **color** to make the output more readable.
-They are implemented like this:
-```cpp
-// include/utils.h
-void printError(const std::string &message) {
-    // Print the message in red color
-    std::cerr << "\033[1;31m" << message << "\033[0m" << std::endl;
-}
-```
-If the project is judged by a system (like Online Judges), **some** of the output may not match the expected output string.
-But I believe this project is judged by TAs' hardworking hands, so I hope this feature can make the output more readable.
-
-**If it needs to be deleted, please email me and I will send a revised version.**
-
 ## Runtime Environment
-
 - OS: Ubuntu 20.04
+- Compiler: g++ 9.3.0 or higher
+- C++ Standard: **C++14** or higher
+- Make: GNU Make 4.2.1 or higher
+
+## How to Run
+1. Prepare a Ubuntu 20.04 environment.
     - You can install docker according to [USC CSCI-104 Docker Tutorial](https://github.com/csci104/docker) to run the
       project.
     - *Might also* work on macOS or other Linux distributions, but not guaranteed.
-- Compiler: g++ 9.3.0 or higher
-- C++ Standard: C++11 or higher
-- Make: GNU Make 4.2.1 or higher
+2. Make sure you have installed the required tools.
+    ```shell
+    sudo apt update
+    sudo apt install g++ make
+    ```
+3. Clone the project
+    ```shell
+   git clone
+   cd git450
+   ```
+4. Compile the project
+    ```shell
+    make
+    ```
+5. For locally testing, you can run the servers and the client in different terminals.
+    - Terminal 1 - 4: Run the servers
+        ```shell
+        ./serverA
+        ```
+        ```shell
+        ./serverD
+        ```
+        ```shell
+        ./serverR
+        ```
+        ```shell
+        ./serverM
+        ```
+    - Terminal 5: Run the client
+        ```shell
+        ./client <username> <password>
+        ```
+      For test, you can use `test` and `test` as the username and password.
 
 ## Implementation
 
@@ -155,6 +179,10 @@ See `include/tcp_socket.h` and `include/udp_socket.h` for more details.
 2. Improve the data store mechanism: currently, the data is stored in **file system**, which is volatile, and is hard to
    support multi-threading.
    It should be stored in a persistent storage like a **database**.
+
+## References
+
+The sample data in the `data/` folder and the network topology (including the graph above) are provided by the professor and the TA group of EE450, 2024 fall, University of Southern California.
 
 ## Acknowledgement
 
